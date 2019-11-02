@@ -37,10 +37,6 @@ def rgb2bayer(image):
     bayer[0:rows+1:2, 0:cols+1:2, 1] = 0
     bayer[1:rows+1:2, 1:cols+1:2, 1] = 0
 
-
-    print(bayer.ndim)
-    print(bayer.shape)
-
     assert bayer.ndim == 3 and bayer.shape[-1] == 3
     return bayer
 
@@ -86,9 +82,22 @@ def bayer2rgb(bayer):
     #
     # You code goes here
     #
+    from scipy.signal import convolve2d
+
     image = bayer.copy()
-    rb_k = np.empty((3, 3))
-    g_k = np.empty((3, 3))
+
+    # Kernels: g_k for green and rb_k for red and blue
+    rb_k = np.array([[1, 0, 1],
+         [0, 0, 0],
+         [1, 0, 1]]) / 2
+    g_k = np.array([[0, 1, 0],
+         [1, 0, 1],
+         [0, 1, 0]]) / 4
+
+    # Calculate Convolutions
+    image[:, :, 0] = convolve2d(image[:, :, 0], rb_k, mode='same', boundary='fill', fillvalue=0)
+    image[:, :, 1] = convolve2d(image[:, :, 1], rb_k, mode='same', boundary='fill', fillvalue=0)
+    image[:, :, 2] = convolve2d(image[:, :, 2], g_k, mode='same', boundary='fill', fillvalue=0)
 
     assert image.ndim == 3 and image.shape[-1] == 3 and \
                 g_k.shape == (3, 3) and rb_k.shape == (3, 3)

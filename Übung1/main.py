@@ -43,18 +43,18 @@ def problem2():
 
     bayer = rgb2bayer(im)
 
-    test = bayer
-
     # scale and crop each channel
     bayer[:, :, 0] = scale_and_crop_x2(bayer[:, :, 0])
     bayer[:, :, 1] = scale_and_crop_x2(bayer[:, :, 1])
     bayer[:, :, 2] = scale_and_crop_x2(bayer[:, :, 2])
 
 
-    display_images(im, bayer)
+
 
     # interpolate
     im_zoom, _, _ = bayer2rgb(bayer)
+
+    #display_images(bayer, im_zoom)
 
     save_image("data/castle_out.png", im_zoom)
 

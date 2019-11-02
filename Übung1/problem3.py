@@ -14,6 +14,11 @@ def load_points(path):
     image_pts = np.empty((100, 3))
     world_pts = np.empty((100, 4))
 
+    array = np.load(path)
+    image_pts = array["image"]
+    world_pts = array["world"]
+
+
     # sanity checks
     assert image_pts.shape[0] == world_pts.shape[0]
 
@@ -32,11 +37,13 @@ def create_A(x, X):
     Returns:
         A: (2*N, 12) matrix A
     """
-
     N, _ = x.shape
     assert N == X.shape[0]
 
-    A = np.empty((200, 12))
+    A = np.empty((2*N, 12))
+
+    cross = np.cross(x, X)
+    print(cross.shape)
     
     assert A.shape[0] == 2*N and A.shape[1] == 12
     return A
@@ -52,6 +59,19 @@ def homogeneous_Ax(A):
     Returns:
         P: (3, 4) projection matrix P
     """
+    # Compute SVD
+    u, s, vh = np.linalg.svd(A)
+
+    # Get smallest singular value (stored in s)
+    ss = np.argmin(s, axis=0)  # Get index of row with smalles ev
+
+    # Get correspoinding right singular vector (rows of vh)
+    rsv = vh[ss, :]
+
+    # Reshape 12x1 vector into 3x4 vector using np.reshape(3,4)
+    h_A = rsv.reshape(3, 4)
+
+    # Return matrix
     return np.empty((3, 4))
 
 def solve_KR(P):
@@ -70,6 +90,13 @@ def solve_KR(P):
         K: 3x3 matrix with intrinsics
         R: 3x3 rotation matrix 
     """
+    from scipy.linalg import rq
+    r, k = rq(P)  # r is upper triangular and k is unitary/orthogonal
+
+    # Check if elements of k are positive and flip if not
+    if np.any(k) < 0:
+        print("Flipping signs so that elements of k are positive")
+        k = np.negative(k)
 
     return np.empty((3, 3)), np.empty((3, 3))
 
@@ -83,4 +110,20 @@ def solve_c(P):
     Returns:
         c: 3x1 camera center coordinate in the world frame
     """
+    u, s, vh = np.linalg.svd(P)
+
+    from scipy.linalg import null_space
+    ns = null_space(P)
+
+    # Calculate c from null space
+
+    # Transform c into non-homogeneous form (3D-Vector)
+    x_homo = np.array([1, 2])  # Test
+
+    w_homo = x_homo[-1]
+    aug_vector = np.linalg.solve(w_homo, x_homo)
+    x = aug_vector[:-1]  # all but last element
+    print("If back-transformation was correct this should print 1: ", aug_vector[-1])
+
+    # Return x
     return np.empty((3, 1))
