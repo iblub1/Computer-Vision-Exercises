@@ -22,6 +22,24 @@ def rgb2bayer(image):
     #
     # You code goes here
     #
+    print("PROBLEM 2 BEGINNT HIER: ")
+    rows, cols, c = bayer.shape
+
+    # red channel
+    bayer[0:rows+1:2, :, 0] = 0
+    bayer[:, 0:cols+1:2, 0] = 0
+
+    # blue channel
+    bayer[1::2, :, 2] = 0
+    bayer[:, 1::2, 2] = 0
+
+    # green channel
+    bayer[0:rows+1:2, 0:cols+1:2, 1] = 0
+    bayer[1:rows+1:2, 1:cols+1:2, 1] = 0
+
+
+    print(bayer.ndim)
+    print(bayer.shape)
 
     assert bayer.ndim == 3 and bayer.shape[-1] == 3
     return bayer
@@ -42,6 +60,9 @@ def nearest_up_x2(x):
     # You code goes here
     #
     y = np.empty((2*h, 2*w))
+
+
+
 
     assert y.ndim == 2 and \
             y.shape[0] == 2*x.shape[0] and \
@@ -89,6 +110,13 @@ def scale_and_crop_x2(bayer):
     # You code goes here
     #
     cropped = bayer.copy()
+
+
+    from scipy.interpolate import NearestNDInterpolator
+    interpolator = NearestNDInterpolator(h, w)
+
+    for p1, p2 in np.nditer(y, x):
+        print(p1, p2)
 
     assert cropped.ndim == 2
     return cropped

@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as image
 
 def display_image(img):
     """ Show an image with matplotlib:
@@ -10,6 +12,7 @@ def display_image(img):
     #
     # You code here
     #
+    plt.imshow(img)
 
 
 def save_as_npy(path, img):
@@ -19,10 +22,7 @@ def save_as_npy(path, img):
         Image as numpy array (H,W,3)
     """
     
-    #
-    # You code here
-    #
-
+    np.save(file=path, arr=img)
 
 
 def load_npy(path):
@@ -35,7 +35,7 @@ def load_npy(path):
     #
     # You code here
     #
-
+    return np.load(path)
 
 def mirror_horizontal(img):
     """ Create and return a horizontally mirrored image:
@@ -50,6 +50,7 @@ def mirror_horizontal(img):
     #
     # You code here
     #
+    return np.flip(img, axis=0)
 
 def display_images(img1, img2):
     """ display the normal and the mirrored image in one plot:
@@ -61,3 +62,7 @@ def display_images(img1, img2):
     #
     # You code here
     #
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.suptitle('Horizontally stacked subplots')
+    ax1.imshow(img1)
+    ax2.imshow(img2)
