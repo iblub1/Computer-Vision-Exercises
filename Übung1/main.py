@@ -51,7 +51,7 @@ def problem2():
     bayer[:, :, 2] = scale_and_crop_x2(bayer[:, :, 2])
 
 
-    display_images(test, bayer)
+    display_images(im, bayer)
 
     # interpolate
     im_zoom, _, _ = bayer2rgb(bayer)

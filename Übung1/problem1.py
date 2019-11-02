@@ -66,3 +66,4 @@ def display_images(img1, img2):
     fig.suptitle('Horizontally stacked subplots')
     ax1.imshow(img1)
     ax2.imshow(img2)
+    plt.show()

@@ -109,14 +109,16 @@ def scale_and_crop_x2(bayer):
     #
     # You code goes here
     #
-    cropped = bayer.copy()
+    copy = bayer.copy()
+    h, w = copy.shape
 
+    scaled = np.repeat(copy, 2, axis=0)
+    scaled = np.repeat(scaled, 2, axis=1)
 
-    from scipy.interpolate import NearestNDInterpolator
-    interpolator = NearestNDInterpolator(h, w)
+    start_h, end_h = int(h/2), int(1.5 * h)
+    start_w, end_w = int(w/2), int(1.5 * w)
 
-    for p1, p2 in np.nditer(y, x):
-        print(p1, p2)
+    cropped = scaled[start_h:end_h, start_w:end_w]
 
     assert cropped.ndim == 2
     return cropped
