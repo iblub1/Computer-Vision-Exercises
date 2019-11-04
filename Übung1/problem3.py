@@ -40,10 +40,13 @@ def create_A(x, X):
     N, _ = x.shape
     assert N == X.shape[0]
 
-    A = np.empty((2*N, 12))
+    A = np.zeros((2*N, 12))
 
-    cross = np.cross(x, X)
-    print(cross.shape)
+    for i, X_i in enumerate(X):
+        A[2*i, 4:8] = -X_i
+        A[2*i, 8:] = x[i, 1] * X_i
+        A[2*i + 1, 0:4] = X_i
+        A[2*i+1, 8:] = -x[i, 0] * X_i
     
     assert A.shape[0] == 2*N and A.shape[1] == 12
     return A
@@ -63,7 +66,7 @@ def homogeneous_Ax(A):
     u, s, vh = np.linalg.svd(A)
 
     # Get smallest singular value (stored in s)
-    ss = np.argmin(s, axis=0)  # Get index of row with smalles ev
+    ss = np.argmin(s)  # Get index of element smalles ev
 
     # Get correspoinding right singular vector (rows of vh)
     rsv = vh[ss, :]
@@ -72,7 +75,7 @@ def homogeneous_Ax(A):
     h_A = rsv.reshape(3, 4)
 
     # Return matrix
-    return np.empty((3, 4))
+    return h_A
 
 def solve_KR(P):
     """Using th RQ-decomposition find K and R 
@@ -91,7 +94,7 @@ def solve_KR(P):
         R: 3x3 rotation matrix 
     """
     from scipy.linalg import rq
-    r, k = rq(P)  # r is upper triangular and k is unitary/orthogonal
+    k, r = rq(P)  # r is upper triangular and k is unitary/orthogonal
 
     # Check if elements of k are positive and flip if not
     if np.any(k) < 0:
@@ -110,20 +113,20 @@ def solve_c(P):
     Returns:
         c: 3x1 camera center coordinate in the world frame
     """
-    u, s, vh = np.linalg.svd(P)
+    _, _, vh = np.linalg.svd(P)
 
-    from scipy.linalg import null_space
-    ns = null_space(P)
+    ns = vh[-1,:]  # null space is last row of vh
 
-    # Calculate c from null space
+    c = ns
 
     # Transform c into non-homogeneous form (3D-Vector)
-    x_homo = np.array([1, 2])  # Test
+    #x_homo = np.array([1, 2])  # Test
+    x_homo = c
 
     w_homo = x_homo[-1]
-    aug_vector = np.linalg.solve(w_homo, x_homo)
-    x = aug_vector[:-1]  # all but last element
+    aug_vector = x_homo / w_homo
+    c = aug_vector[:-1].reshape(3,1)  # all but last element
     print("If back-transformation was correct this should print 1: ", aug_vector[-1])
 
     # Return x
-    return np.empty((3, 1))
+    return c

@@ -89,15 +89,15 @@ def bayer2rgb(bayer):
     # Kernels: g_k for green and rb_k for red and blue
     rb_k = np.array([[1, 0, 1],
          [0, 0, 0],
-         [1, 0, 1]]) / 2
+         [1, 0, 1]])
     g_k = np.array([[0, 1, 0],
          [1, 0, 1],
-         [0, 1, 0]]) / 4
+         [0, 1, 0]]) / 2
 
     # Calculate Convolutions
     image[:, :, 0] = convolve2d(image[:, :, 0], rb_k, mode='same', boundary='fill', fillvalue=0)
-    image[:, :, 1] = convolve2d(image[:, :, 1], rb_k, mode='same', boundary='fill', fillvalue=0)
-    image[:, :, 2] = convolve2d(image[:, :, 2], g_k, mode='same', boundary='fill', fillvalue=0)
+    image[:, :, 1] = convolve2d(image[:, :, 1], g_k, mode='same', boundary='fill', fillvalue=0)
+    image[:, :, 2] = convolve2d(image[:, :, 2], rb_k, mode='same', boundary='fill', fillvalue=0)
 
     assert image.ndim == 3 and image.shape[-1] == 3 and \
                 g_k.shape == (3, 3) and rb_k.shape == (3, 3)
