@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.signal as signal
 
+# using the convolution operation as seen in main.py
+conv2d = lambda im, k: signal.convolve2d(im, k, boundary='wrap', mode='same')
+
 def gaussian(sigma):
 	"""Computes (3, 1) array corresponding to a Gaussian filter.
 	Normalisation is not required.
@@ -156,8 +159,6 @@ def apply_sobel(im, sx, sy):
 	#
 	##########################################################################
 
-	# using the convolution operation as seen in main.py
-	conv2d = lambda im, k: signal.convolve2d(im, k, boundary='wrap', mode='same')
 	G_x = conv2d(im_norm, sx)
 	G_y = conv2d(im_norm, sy)
 
