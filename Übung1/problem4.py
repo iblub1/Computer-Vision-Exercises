@@ -18,6 +18,44 @@ def gaussian(sigma):
 	#
 	# You code goes here
 	#
+	##########################################################################
+
+	# Filter Construction inspired by:
+	# https://stackoverflow.com/questions/17190649/how-to-obtain-a-gaussian-filter-in-python
+
+	# filter radius [1D -> (2 * r + 1) | 2D -> (2 * r + 1, 2 * r + 1)]
+	# Here: (2 * 1 + 1) = (3)
+	r = 1  		 
+
+	# (3, 1) Array with indices -r, .., 0, ..., r
+	x = np.arange(-r , r + 1).reshape(2 * r + 1, -1) # <- ensure shape of (3, 1), not (3,)
+
+	# exponential term exp(-x^2 / 2 * sigma^2), no normalization
+	gauss = np.exp( -(np.square(x)) / (2 * np.square(sigma)) )
+	
+	# DEBUG-INFO:
+	# it is possible to recieve the 2D-Kernel by using the outer product
+	# this 2D-array can then easily be plotted with imshow
+
+	# ensure the correct size of the 1D-Kernel
+	assert gauss.shape == (3, 1)
+
+	'''
+	import matplotlib.pyplot as plt
+	## PLOT 1D
+	
+	plt.plot(x, gauss)
+	plt.show()
+
+	# PLOT 2D
+	kernel_2D = np.outer(gauss, gauss)
+	plt.imshow(kernel_2D)
+	plt.colorbar()
+	plt.show()
+	'''
+
+	##########################################################################
+	
 	return gauss
 
 def diff():
@@ -33,8 +71,15 @@ def diff():
 	#
 	# You code goes here
 	#
+	##########################################################################
 
-	return np.empty((1, 3))
+	# implementation as seen in the formula on
+	# page 33 of l3-filtering_continued
+
+	central_diff = (1/2) * np.array([[1, 0, -1]])
+
+	##########################################################################
+	return central_diff
 
 def create_sobel():
 	"""Creates Sobel operator from two [3, 1] filters
@@ -53,8 +98,41 @@ def create_sobel():
 	#
 	# You code goes here
 	#
-	sx = np.zeros((3, 3))
-	sy = np.zeros((3, 3))
+	##########################################################################
+
+	# those two values will be result in a approximation of the sobel filters
+	# sx, sy
+	sigma = 0.85
+	z = 4
+
+	# sx = np.zeros((3, 3))
+	# sy = np.zeros((3, 3))
+
+	# create gaussian filter with given sigma 
+	g = gaussian(sigma)
+
+	# create central difference filter -> (1,3).T <=> (3, 1)
+	dx = diff()
+
+	# 1D gaussian filter info
+	print('Gaussian Filter:\n', g, g.shape)
+
+	# 1D central differences filter info
+	print('Central Differences Filter:\n', dx, dx.shape)
+	
+	#    (3, 1) x (1, 3) -> (3, 3)-Matrix
+	#   / 0.5 \
+	#   |  0  | x (g(0), g(1), g(2)) = ...
+	#   \-0.5 /
+	sx = np.outer(g, dx) * z
+	sy = sx.T
+
+
+	print("sx:\n", sx, sx.shape) 
+	print("sy:\n", sy, sy.shape)
+
+
+	##########################################################################
 
 	# do not change this
 	return sx, sy, sigma, z
@@ -76,6 +154,33 @@ def apply_sobel(im, sx, sy):
 	#
 	# Your code goes here
 	#
+	##########################################################################
+
+	# using the convolution operation as seen in main.py
+	conv2d = lambda im, k: signal.convolve2d(im, k, boundary='wrap', mode='same')
+	G_x = conv2d(im_norm, sx)
+	G_y = conv2d(im_norm, sy)
+
+
+	### DEBUG-OUTPUT ###
+	import matplotlib.pyplot as plt
+
+	plt.imshow(G_x, cmap='Greys')
+	plt.show()
+
+	plt.imshow(G_y, cmap='Greys')
+	plt.show()
+	####################
+
+
+	im_norm = np.sqrt(np.square(G_x) + np.square(G_y))
+
+	### DEBUG-OUTPUT ###
+	plt.imshow(im_norm, cmap='Greys')
+	plt.show()
+	####################
+
+	##########################################################################
 	return im_norm
 
 
