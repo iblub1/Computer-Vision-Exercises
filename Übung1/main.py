@@ -109,6 +109,20 @@ def problem4():
     save_image("data/coins_03.png", np.abs(im_out))
 
 
+    # run the sobel alpha with different values
+    x = input('Try out steerable filter [Y/N]: ')
+    if x is 'Y' or x is 'y': 
+        A = np.linspace(0, 1, 11)
+        for a in A:
+            rad = a * math.pi
+            s_alpha = sobel_alpha(sx, sy, rad)
+            im_out = conv2d(im, s_alpha)
+            plt.imshow(np.abs(im_out), cmap=plt.cm.gray)
+            deg = int(rad * (180 / math.pi))
+            plt.title("Steering " + str(deg) + "°")
+            plt.show()
+
+
 if __name__ == "__main__":
     # problem1()
     # problem2()

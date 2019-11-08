@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.signal as signal
+import matplotlib.pyplot as plt
 
-# using the convolution operation as seen in main.py
+
+# using the convolution operation as seen in main.py globally
 conv2d = lambda im, k: signal.convolve2d(im, k, boundary='wrap', mode='same')
 
 def gaussian(sigma):
@@ -114,14 +116,14 @@ def create_sobel():
 	# create gaussian filter with given sigma 
 	g = gaussian(sigma)
 
-	# create central difference filter -> (1,3).T <=> (3, 1)
+	# create central difference filter
 	dx = diff()
 
 	# 1D gaussian filter info
-	print('Gaussian Filter:\n', g, g.shape)
+	# print('Gaussian Filter:\n', g, g.shape)
 
 	# 1D central differences filter info
-	print('Central Differences Filter:\n', dx, dx.shape)
+	# print('Central Differences Filter:\n', dx, dx.shape)
 	
 	#    (3, 1) x (1, 3) -> (3, 3)-Matrix
 	#   / 0.5 \
@@ -131,8 +133,8 @@ def create_sobel():
 	sy = sx.T
 
 
-	print("sx:\n", sx, sx.shape) 
-	print("sy:\n", sy, sy.shape)
+	# print("sx:\n", sx, sx.shape) 
+	# print("sy:\n", sy, sy.shape)
 
 
 	##########################################################################
@@ -164,20 +166,22 @@ def apply_sobel(im, sx, sy):
 
 
 	### DEBUG-OUTPUT ###
-	import matplotlib.pyplot as plt
-
-	plt.imshow(G_x, cmap='Greys')
+	plt.imshow(G_x, cmap=plt.cm.gray)
 	plt.show()
 
-	plt.imshow(G_y, cmap='Greys')
+	plt.imshow(G_y, cmap=plt.cm.gray)
 	plt.show()
 	####################
 
 
 	im_norm = np.sqrt(np.square(G_x) + np.square(G_y))
 
+	# normalize the output to [0, 255]
+	im_norm *= 255.0 / np.max(im_norm)
+
 	### DEBUG-OUTPUT ###
-	plt.imshow(im_norm, cmap='Greys')
+	# plt.imshow(im_norm, cmap='Greys')
+	plt.imshow(im_norm, cmap=plt.cm.gray)
 	plt.show()
 	####################
 
@@ -201,8 +205,30 @@ def sobel_alpha(kx, ky, alpha):
 	#
 	# You code goes here
 	#
+	##########################################################################
 
-	return np.empty((3, 3))
+	# Calculation:
+	#
+	# [get the I out of the operation by using linearity properties of conv.]
+	# G(a) = I * K(a) = ...
+	# I * cos(a) I * kx + sin(a) I * ky = I * (cos(a) kx + sin(a) ky)
+	# Which means, that:
+	# K(a) = (cos(a)kx + sin(a)ky)
+
+	ka = np.cos(alpha) * kx + np.sin(alpha) * ky
+
+
+	## DEBUG-OUTPUT ##
+	# print('\nka:\n', ka)
+	# plt.imshow(ka)
+	# plt.colorbar()
+	# plt.show()
+	# print(ka.shape)
+	##################
+
+
+	##########################################################################
+	return ka 
 
 
 """
@@ -240,4 +266,4 @@ class EdgeDetection(object):
 		Any wrong answer will cancel the correct answer.
 		"""
 
-		return ((-1, -1), )
+		return ((1, 2), (2, 1))
