@@ -93,15 +93,29 @@ def solve_KR(P):
         K: 3x3 matrix with intrinsics
         R: 3x3 rotation matrix 
     """
-    from scipy.linalg import rq
-    k, r = rq(P)  # r is upper triangular and k is unitary/orthogonal
+    #from scipy.linalg import qr
+    from numpy.linalg import qr
+
+    P_ = P[:3, :3]
+
+    K, R = qr(P_)  # r is upper triangular and k is unitary/orthogonal
+    print(K.shape, R.shape)
+    print('R: ', R)
 
     # Check if elements of k are positive and flip if not
-    if np.any(k) < 0:
-        print("Flipping signs so that elements of k are positive")
-        k = np.negative(k)
+    
+    #if np.any(k) < 0:
+    print("Flipping signs so that elements of k are positive")
+    K_ = np.abs(K)
 
-    return np.empty((3, 3)), np.empty((3, 3))
+    # print(K_.shape, K.shape)
+    X = np.linalg.solve(K_, K)
+    print('\nK_ = \n', K_)
+    print('\n K.dot(X) = \n', K.dot(X))
+
+    R = R.dot(X)
+    K = K.dot(X)
+    return K, R
 
 def solve_c(P):
     """Find the camera center coordinate from P

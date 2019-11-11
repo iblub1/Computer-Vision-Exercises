@@ -30,7 +30,7 @@ def gaussian(sigma):
 
 	# filter radius [1D -> (2 * r + 1) | 2D -> (2 * r + 1, 2 * r + 1)]
 	# Here: (2 * 1 + 1) = (3)
-	r = 1  		 
+	r = 1
 
 	# (3, 1) Array with indices -r, .., 0, ..., r
 	x = np.arange(-r , r + 1).reshape(2 * r + 1, -1) # <- ensure shape of (3, 1), not (3,)
@@ -46,9 +46,7 @@ def gaussian(sigma):
 	assert gauss.shape == (3, 1)
 
 	'''
-	import matplotlib.pyplot as plt
-	## PLOT 1D
-	
+	## PLOT 1D	
 	plt.plot(x, gauss)
 	plt.show()
 
@@ -110,9 +108,6 @@ def create_sobel():
 	sigma = 0.85
 	z = 4
 
-	# sx = np.zeros((3, 3))
-	# sy = np.zeros((3, 3))
-
 	# create gaussian filter with given sigma 
 	g = gaussian(sigma)
 
@@ -166,11 +161,13 @@ def apply_sobel(im, sx, sy):
 
 
 	### DEBUG-OUTPUT ###
+	'''
 	plt.imshow(G_x, cmap=plt.cm.gray)
 	plt.show()
 
 	plt.imshow(G_y, cmap=plt.cm.gray)
 	plt.show()
+	'''
 	####################
 
 
@@ -180,9 +177,10 @@ def apply_sobel(im, sx, sy):
 	im_norm *= 255.0 / np.max(im_norm)
 
 	### DEBUG-OUTPUT ###
-	# plt.imshow(im_norm, cmap='Greys')
+	'''
 	plt.imshow(im_norm, cmap=plt.cm.gray)
 	plt.show()
+	'''
 	####################
 
 	##########################################################################
@@ -219,11 +217,13 @@ def sobel_alpha(kx, ky, alpha):
 
 
 	## DEBUG-OUTPUT ##
-	# print('\nka:\n', ka)
-	# plt.imshow(ka)
-	# plt.colorbar()
-	# plt.show()
-	# print(ka.shape)
+	
+	print('\nka:\n', ka)
+	plt.imshow(ka)
+	plt.colorbar()
+	plt.show()
+	print(ka.shape)
+	
 	##################
 
 
@@ -266,4 +266,4 @@ class EdgeDetection(object):
 		Any wrong answer will cancel the correct answer.
 		"""
 
-		return ((1, 2), (2, 1))
+		return ((1, 3), (2, 1))

@@ -121,8 +121,7 @@ def problem4():
             deg = int(rad * (180 / math.pi))
             plt.title("Steering " + str(deg) + "°")
             plt.show()
-
-
+            
 if __name__ == "__main__":
     # problem1()
     # problem2()
