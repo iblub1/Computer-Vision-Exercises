@@ -23,6 +23,34 @@ def load_data(path):
     # TODO
     #
 
+    # 'walk' through all folders of path
+    for paths in os.walk(path):        
+        
+        # load the folders who start with facial
+        # ("facial_*", [], [img1, img2, ..., imgN])
+        if 'facial' in paths[0]:
+            
+            # path to directory
+            prefix = paths[0]
+
+            # list of file names in directory
+            data = paths[2]
+
+            for i in range(len(data)):
+                # retrieve full path to file
+                # img is already numpy-Array
+                img = plt.imread(prefix + '/' + data[i])
+
+                if 'features' in prefix:
+                    # plt.imshow(img)
+                    # plt.show()
+                    feats.append(img)
+
+                if 'images' in prefix:
+                    # plt.imshow(img, cmap=plt.cm.gray)
+                    # plt.show()
+                    imgs.append(img)
+                
     return imgs, feats
 
 def gaussian_kernel(fsize, sigma):
