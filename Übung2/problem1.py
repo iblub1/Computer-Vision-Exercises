@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import convolve2d
+import scipy.signal as signal
 
 def load_data(path):
     '''
@@ -69,7 +70,26 @@ def gaussian_kernel(fsize, sigma):
     # TODO
     #
 
-    return np.empty(fsize, fsize)
+    # using the scipy gaussian function with the given parameters
+    gauss = signal.gaussian(fsize, sigma)
+
+    # calculate outer product of the 1D gaussian filter to get a
+    # 2D filter
+
+    gauss_2D = np.outer(gauss, gauss)
+    
+    # normalization factor of the gaussian
+    norm = 1 / (np.sqrt(2 * np.pi) * sigma) 
+    gauss_2D = norm * gauss_2D
+
+    ## DEBUG-CODE
+    # print(gauss_2D)
+    # plt.imshow(gauss_2D)
+    # plt.colorbar()
+    # plt.show()
+    ##
+
+    return gauss_2D
 
 def downsample_x2(x, factor=2):
     '''
@@ -86,7 +106,14 @@ def downsample_x2(x, factor=2):
     # TODO
     #
 
-    downsample = np.empty(None, None)
+    # generate a image of half the size of the input by only using every
+    # second pixel
+    downsample = x[::2, ::2]
+        
+    ## DEBUG-CODE
+    # plt.imshow(downsample)
+    # plt.show()
+    ## 
 
     return downsample
 
@@ -110,6 +137,17 @@ def gaussian_pyramid(img, nlevels, fsize, sigma):
     #
     # TODO
     #
+
+    # create gaussian kernel to convolve with the downsampled image
+    G_kernel = gaussian_kernel(fsize, sigma)
+
+    img_tmp = img.copy()
+
+    # for level in range(nlevels):
+    #     G_down = downsample_x2(img_tmp)
+    #     # append the new image
+    #     GP.append(img_tmp)
+
 
     return GP
 
