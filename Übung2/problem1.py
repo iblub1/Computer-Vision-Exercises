@@ -79,7 +79,7 @@ def gaussian_kernel(fsize, sigma):
     gauss_2D = np.outer(gauss, gauss)
     
     # normalization factor of the gaussian
-    norm = 1 / (np.sqrt(2 * np.pi) * sigma) 
+    norm = 1 / (np.sqrt(2 * np.pi) * sigma)
     gauss_2D = norm * gauss_2D
 
     ## DEBUG-CODE
@@ -143,10 +143,21 @@ def gaussian_pyramid(img, nlevels, fsize, sigma):
 
     img_tmp = img.copy()
 
-    # for level in range(nlevels):
-    #     G_down = downsample_x2(img_tmp)
-    #     # append the new image
-    #     GP.append(img_tmp)
+    # save the original image
+    GP.append(img_tmp)
+
+    # inspired by:
+    # https://cabjudo.github.io/machine_perception/pyramids/
+    for level in range(nlevels - 1):
+        print(level)
+        # gaussian smoothing
+        img_tmp = convolve2d(img_tmp, G_kernel, 'valid')
+
+        # downsample the image
+        img_tmp = downsample_x2(img_tmp)
+
+        # save image
+        GP.append(img_tmp)
 
 
     return GP
@@ -233,7 +244,7 @@ def sliding_window(img, feat, step=1):
         for row in range(rows):
             for col in range(cols):
                 sub_image = img[row:row+win_rows:step, col:col+win_cols:step]  # This basically cuts out our window from the picture
-
+                
                 distance = template_distance(sub_image, window)
                 print(distance)  # For Debugging if someone wants to test this.
                 scores.append(distance)
@@ -274,8 +285,10 @@ class Distance(object):
             (1, 1) means
             'I will use Dot Product because it is more computationally efficient.'
         '''
-
-        return (None, None)  # TODO
+        # Idea: ((1, 2) -> the angle can be calculated from the scalar product
+        #                  if we get the angle, the length(brightness) isnt needed
+        # return (None, None)  # TODO
+        return (1, 2)
 
 
 def find_matching_with_scale(imgs, feats):
