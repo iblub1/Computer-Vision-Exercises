@@ -171,7 +171,17 @@ def template_distance(v1, v2):
     #
     # TODO
     #
+
+    # DOT PRODUCT
     distance = np.dot(v1, v2)  # use angle between two vectors as distance (dot product)
+
+    # SSD
+    s_d_list = []
+    for i in range(v1.size):
+         s_d = np.square(v1[i] - v2[i])
+         s_d_list.append(s_d)
+
+    distance = sum(s_d_list)
 
     return distance
 
@@ -211,7 +221,7 @@ def sliding_window(img, feat, step=1):
         # Technically we're sliding the picture over the constant window. Same result
         for row in range(rows):
             for col in range(cols):
-                sub_image = img[row:row+win_rows, col:col+win_cols]  # This basically cuts out our window from the picture
+                sub_image = img[row:row+win_rows:step, col:col+win_cols:step]  # This basically cuts out our window from the picture
 
                 distance = template_distance(sub_image, window)
                 print(distance)  # For Debugging if someone wants to test this.
@@ -274,7 +284,23 @@ def find_matching_with_scale(imgs, feats):
     (score, g_im, feat) = (None, None, None)
 
     #
-    # TODO
+    # TODO CODE BELOW IS NOT TESTED!
     #
+    nlevels = 3
+    fsize = 5
+    sigma = 1.4
+    distances = []
+
+    # TODO I think we want to calculate the distance between all features and all faces at all scales.
+    # TODO However I dont think that this code achievves this. We probably need to change this!
+    for img in imgs:
+        pyramid_imgs = gaussian_pyramid(img, nlevels, fsize, sigma)
+        for p_img in pyramid_imgs:
+            for feat in feats:
+                min_distance = sliding_window(p_img, feat)
+                distances.append(min_distance)
+
+
+    # TODO Calculate matches out of distances
 
     return match
