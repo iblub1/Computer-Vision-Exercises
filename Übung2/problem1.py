@@ -166,11 +166,12 @@ def template_distance(v1, v2):
     Returns:
         Distance
     '''
-    distance = None
+
 
     #
     # TODO
     #
+    distance = np.dot(v1, v2)  # use angle between two vectors as distance (dot product)
 
     return distance
 
@@ -192,6 +193,37 @@ def sliding_window(img, feat, step=1):
     #
     # TODO
     #
+
+    # TODO Untested code below:
+
+    # Initialize window with size of feature
+    window = feat.copy()
+
+    # Calculate how far we can slide by subtracgint the feature size from the image size
+    scores = []
+    img_rows, img_cols = img.shape()
+    win_rows, win_cols = window.shape()
+
+    # Sanity check that our window is actually smaller than our picture
+    if win_rows <= img_rows and win_cols <= img_cols:
+        rows, cols = img_rows - win_rows, img_cols - win_cols
+
+        # Technically we're sliding the picture over the constant window. Same result
+        for row in range(rows):
+            for col in range(cols):
+                sub_image = img[row:row+win_rows, col:col+win_cols]  # This basically cuts out our window from the picture
+
+                distance = template_distance(sub_image, window)
+                print(distance)  # For Debugging if someone wants to test this.
+                scores.append(distance)
+
+
+    else:
+        print("Bruh, window is bigger than the picture. Dafuq")
+
+
+    # Get smallest distance
+    min_score = min(scores)
 
     return min_score
 
