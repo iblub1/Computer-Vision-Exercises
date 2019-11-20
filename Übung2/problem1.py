@@ -171,17 +171,28 @@ def template_distance(v1, v2):
     #
     # TODO
     #
+    import time # For timing calculation needed for multiple choice question
 
     # DOT PRODUCT
+    t_start = time.clock()
+
     distance = np.dot(v1, v2)  # use angle between two vectors as distance (dot product)
 
+    print("DOT TIME: ", time.clock() - t_start)
+
     # SSD
+    t_start = time.clock()
+
     s_d_list = []
     for i in range(v1.size):
          s_d = np.square(v1[i] - v2[i])
          s_d_list.append(s_d)
 
     distance = sum(s_d_list)
+
+    print("SSD TIME: ", time.clock() - t_start)
+
+
 
     return distance
 

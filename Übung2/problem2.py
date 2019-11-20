@@ -66,7 +66,7 @@ class PCA(object):
                 - we need singular values which we can obtain from the eigenvalues"
         """
 
-        return (0, 0)
+        return (1, 2, 4) # SVD is more efficient and we can use it to dinf the eigenvalues. DONT KNOW if there are more arguments
 
 #
 # Task 3
