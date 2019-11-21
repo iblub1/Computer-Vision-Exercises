@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 from PIL import Image
 
 #
@@ -49,6 +50,9 @@ def load_faces(path, ext=".pgm"):
 
     """TODO: Ich versteh leider nicht, wie die darauf kommen das wir nur 16 Bilder haben mit jeweils 16x16 pixeln. 
     Im angegebenen Ordner sind insgesamt nämlich 760 pixeln mit jeweils 96x84 Pixeln."""
+
+    # In theory we need to return this:
+    #return img_array, img_shape
     
     return np.random.random((16, 256)), (16, 16)
 
@@ -90,7 +94,7 @@ class PCA(object):
                 - we need singular values which we can obtain from the eigenvalues"
         """
 
-        return (1, 2, 4) # SVD is more efficient and we can use it to dinf the eigenvalues. DONT KNOW if there are more arguments
+        return (1, 2, 4) # SVD is more efficient and we can use it to get the eigenvalues. DONT KNOW if there are more arguments
 
 #
 # Task 3
@@ -106,7 +110,22 @@ def compute_pca(X):
         u: (M, N) bases with principal components
         lmb: (N, ) corresponding variance
     """
-    
+    # Center matrix by subtracting COLUMN mean
+    mean_vector = X.mean(axis=0)
+    print("Shape of X matrix: ", X.shape)
+    print("Shape of mean_vector: ", mean_vector.shape)
+    print("Mean vector should have the same length as the X matrix columns")
+
+    X = X - mean_vector
+
+    # Now we use SVD to calculate our Eigenvalues (variances) and Eigenvectors (direction of variance)
+    u, s, vh = np.linalg.svd(X, full_matrices=False)
+
+    print("We have this mean Eigenvalues: ", s.size)
+
+    # TODO Return Eigenvectors and Eigenvalues (principal components and variance)
+    # If you want to read more: https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
+
     return np.random.random((100, 10)), np.random.random(10)
 
 #
