@@ -25,6 +25,30 @@ def load_faces(path, ext=".pgm"):
     #
     # You code here
     #
+
+    images = []
+    img_shape = (0, 0)
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            if ext in file:  # Check if file is pgm
+                img_path = os.path.join(root, file)
+                img = plt.imread(img_path)  # Read the image
+                img_shape = img.shape
+
+                img = img.flatten()  # Transform 2D image into vector M = height x width
+
+                images.append(img)
+
+    print("We have 760 images. We loaded succesfully:", len(images), " images")
+
+    img_array = np.asarray(images)
+    print("Our img_array needs shape (760, 8064). We have:", img_array.shape)
+    plt.imshow(img_array[0].reshape(img_shape))  # For Debugging: The pictures have 96x84 pixels or 8064 total.
+    print("Each image has shape: ", img_shape)
+    print("\n")
+
+    """TODO: Ich versteh leider nicht, wie die darauf kommen das wir nur 16 Bilder haben mit jeweils 16x16 pixeln. 
+    Im angegebenen Ordner sind insgesamt nämlich 760 pixeln mit jeweils 96x84 Pixeln."""
     
     return np.random.random((16, 256)), (16, 16)
 
