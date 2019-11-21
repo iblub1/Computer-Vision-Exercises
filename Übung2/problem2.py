@@ -110,6 +110,7 @@ def compute_pca(X):
         u: (M, N) bases with principal components
         lmb: (N, ) corresponding variance
     """
+
     # Center matrix by subtracting COLUMN mean
     mean_vector = X.mean(axis=0)
     print("Shape of X matrix: ", X.shape)
@@ -119,14 +120,26 @@ def compute_pca(X):
     X = X - mean_vector
 
     # Now we use SVD to calculate our Eigenvalues (variances) and Eigenvectors (direction of variance)
-    u, s, vh = np.linalg.svd(X, full_matrices=False)
+    U, S, vh = np.linalg.svd(X, full_matrices=False)
 
-    print("We have this mean Eigenvalues: ", s.size)
+    print("We have this mean Eigenvalues: ", S.size)
 
     # TODO Return Eigenvectors and Eigenvalues (principal components and variance)
     # If you want to read more: https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
 
-    return np.random.random((100, 10)), np.random.random(10)
+    # L = (1/N) * S^2
+    N = X.shape[0]
+    lmb = np.square(S) / N
+
+    print('L = ', lmb.shape)
+    print('N = ', X.shape[0])
+    print('M = ', X.shape[1])
+    print('X = ', X.shape, " = (N, M)")
+    print('U = ', U.shape, " = (N, N)")
+    print('S = ', S.shape, " = (N, )")
+
+    # return np.random.random((100, 10)), np.random.random(10)
+    return U, lmb
 
 #
 # Task 4
@@ -149,6 +162,11 @@ def basis(u, s, p = 0.5):
         containing at most p (percentile) of the variance.
     
     """
+    # print('BASIS')
+    # print(u.shape)
+    # print(s.shape)
+    # print(p)
+
     
     return u
 

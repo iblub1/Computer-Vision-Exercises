@@ -90,7 +90,7 @@ def gaussian_kernel(fsize, sigma):
     ##
 
     return gauss_2D
-
+- 1
 def downsample_x2(x, factor=2):
     '''
     Downsampling an image by a factor of 2
@@ -108,7 +108,7 @@ def downsample_x2(x, factor=2):
 
     # generate a image of half the size of the input by only using every
     # second pixel
-    downsample = x[::2, ::2]
+    downsample = x[0::2, 0::2]
         
     ## DEBUG-CODE
     # plt.imshow(downsample)
@@ -139,19 +139,22 @@ def gaussian_pyramid(img, nlevels, fsize, sigma):
     #
 
     # create gaussian kernel to convolve with the downsampled image
-    G_kernel = gaussian_kernel(fsize, sigma)
+    G = gaussian_kernel(fsize, sigma)
 
     img_tmp = img.copy()
 
-    # save the original image
+    # first element of the pyramid is the original image
     GP.append(img_tmp)
 
     # inspired by:
     # https://cabjudo.github.io/machine_perception/pyramids/
-    for level in range(nlevels - 1):
+
+    # start with index 1 since index 0 is already occupied by 
+    # the original image
+    for level in range(1, nlevels):
         print(level)
         # gaussian smoothing
-        img_tmp = convolve2d(img_tmp, G_kernel, 'valid')
+        img_tmp = convolve2d(img_tmp, G, 'valid')
 
         # downsample the image
         img_tmp = downsample_x2(img_tmp)
@@ -192,15 +195,25 @@ def template_distance(v1, v2):
 
     distance = np.dot(v1, v2)  # use angle between two vectors as distance (dot product)
 
+    # Normalized form with (cos(theta) = v1^T * v2 / |v1||v2|)
+    # scaling factors
+    # n_v1 = np.linalg.norm(v1)
+    # n_v2 = np.linalg.norm(v2)
+    # distance = distance / (n_v1 * n_v2)
+
     print("DOT TIME: ", time.clock() - t_start)
 
     # SSD
     t_start = time.clock()
 
     s_d_list = []
+
+    ## Formula:
+    #  E(I,T) = sum_i,j (I(i,j) - T(i, j))^2
+    ##
     for i in range(v1.size):
-         s_d = np.square(v1[i] - v2[i])
-         s_d_list.append(s_d)
+        s_d = np.square(v1[i] - v2[i])
+        s_d_list.append(s_d)
 
     distance = sum(s_d_list)
 
@@ -256,6 +269,7 @@ def sliding_window(img, feat, step=1):
 
     # Get smallest distance
     min_score = min(scores)
+    print(min_score)
 
     return min_score
 
