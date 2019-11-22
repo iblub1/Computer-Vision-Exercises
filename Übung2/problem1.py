@@ -152,7 +152,6 @@ def gaussian_pyramid(img, nlevels, fsize, sigma):
     # start with index 1 since index 0 is already occupied by 
     # the original image
     for level in range(1, nlevels):
-        print(level)
         # gaussian smoothing
         img_tmp = convolve2d(img_tmp, G, 'valid')
 
@@ -197,6 +196,8 @@ def template_distance(v1, v2):
     # scaling factors
     n_v1 = np.linalg.norm(v1)
     n_v2 = np.linalg.norm(v2)
+
+    # apply normalization factor
     distance = distance / (n_v1 * n_v2)
 
 
@@ -240,6 +241,40 @@ def sliding_window(img, feat, step=1):
 
     # Initialize window with size of feature
     window = feat.copy()
+    scores = []
+    img_r, img_c = img.shape
+    win_r, win_c = window.shape
+
+    
+    # determine the number of pixels to pad the image
+    # get rozizontal and vertical radius to pad
+    p_r, p_c = np.ceil(win_r / 2 - 1), np.ceil(win_c / 2 - 1)
+
+    # padding the image to reach all pixels in the image
+    # symetric padding means, that the same pixels at the border
+    # will be appended in reversed order
+    print('p_r = ', p_r, p_c)
+    p_img = np.pad(img, ((p_r, p_r), (p_c, p_c)) , 'symmetric')
+
+    # iterate ver image rows and cols, which is now possible 
+    # since we used padding
+
+    for r in range(2, img_r, step):
+        for c in range(2, img_c, step):
+            sub_image = p_img[-p_r:r:p_r, -p_c:c:p_c]
+
+            sub_image = sub_image.flatten()  
+            window = window.flatten()
+
+            distance = template_distance(sub_image, window)
+
+            scores.append(distance)
+
+    min_score = min(scores)
+
+    '''
+    # Initialize window with size of feature
+    window = feat.copy()
 
     # Calculate how far we can slide by subtracgint the feature size from the image size
     scores = []
@@ -269,6 +304,7 @@ def sliding_window(img, feat, step=1):
         for col in range(cols):
             sub_image = img[row:row+win_rows:step, col:col+win_cols:step]  # This basically cuts out our window from the picture
 
+            
             sub_image = sub_image.flatten()  # We flatten both matrices into a vector so we canculate distance between
             window = window.flatten()
 
@@ -282,7 +318,7 @@ def sliding_window(img, feat, step=1):
     # Get smallest distance
     min_score = min(scores)
 
-
+    '''
     return min_score
 
 
