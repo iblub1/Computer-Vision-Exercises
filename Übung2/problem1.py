@@ -335,25 +335,28 @@ def find_matching_with_scale(imgs, feats):
     (score, g_im, feat) = (None, None, None)
 
     #
-    # TODO CODE BELOW IS NOT TESTED!
+    # TODO
     #
     nlevels = 3
     fsize = 5
     sigma = 1.4
-    distances = []
+    results = []
 
-    # TODO I think we want to calculate the distance between all features and all faces at all scales.
-    # TODO However I dont think that this code achievves this. We probably need to change this!
 
     for img in imgs:
         pyramid_imgs = gaussian_pyramid(img, nlevels, fsize, sigma)
         for p_img in pyramid_imgs:
             for feat in feats:
-                # TODO: MOMENTAN CRASHT sliding window, weil die skalierungen mit der Gaus pyramide kleiner werden als das feature zum sliden.
                 min_distance = sliding_window(p_img, feat)
-                distances.append(min_distance)
+                result = [img, p_img, feat, min_distance]
+                results.append(result)
 
-    print("dasdasd")
+
     # TODO Calculate matches out of distances
 
+
+    #results.sort(key=lambda x: x[3])  # Sort list by distance OPTIONAL
+
+    for img, p_img, feat, min_distance in results:
+        print(min_distance)
     return match
