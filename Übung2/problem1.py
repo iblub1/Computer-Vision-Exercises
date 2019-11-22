@@ -246,27 +246,37 @@ def sliding_window(img, feat, step=1):
     img_rows, img_cols = img.shape
     win_rows, win_cols = window.shape
 
-    print("Our window has: ", win_rows, "rows. This should be equal or less than the rows of the image: ", img_rows)
-    print("Our window has: ", win_cols, "cols. This should be equal or less than the cols of the image: ", img_cols)
+    #print("Our window has: ", win_rows, "rows. This should be equal or less than the rows of the image: ", img_rows)
+    #print("Our window has: ", win_cols, "cols. This should be equal or less than the cols of the image: ", img_cols)
 
     # Sanity check that our window is actually smaller than our picture
     if win_rows <= img_rows and win_cols <= img_cols:
         rows, cols = img_rows - win_rows, img_cols - win_cols
 
-        # Technically we're sliding the picture over the constant window. Same result
-        for row in range(rows):
-            for col in range(cols):
-                sub_image = img[row:row+win_rows:step, col:col+win_cols:step]  # This basically cuts out our window from the picture
-
-                sub_image = sub_image.flatten()  # We flatten both matrices into a vector so we canculate distance between
-                window = window.flatten()
-
-                distance = template_distance(sub_image, window)
-                #print(distance)  # For Debugging if someone wants to test this.
-                scores.append(distance)
-
     else:
-        print("Bruh, window is bigger than the picture. Dafuq. Also if you can read this, the code will crash")
+        pad_width =  win_rows - img_rows
+        pad_height = win_cols - img_cols
+        pad = np.max([pad_width, pad_height])
+
+        img = np.pad(img, pad_width=pad, mode="wrap")
+        img_rows, img_cols = img.shape
+
+        rows, cols = img_rows - win_rows, img_cols - win_cols
+
+
+    # Technically we're sliding the picture over the constant window. Same result
+    for row in range(rows):
+        for col in range(cols):
+            sub_image = img[row:row+win_rows:step, col:col+win_cols:step]  # This basically cuts out our window from the picture
+
+            sub_image = sub_image.flatten()  # We flatten both matrices into a vector so we canculate distance between
+            window = window.flatten()
+
+            distance = template_distance(sub_image, window)
+            #print(distance)  # For Debugging if someone wants to test this.
+            scores.append(distance)
+
+
 
 
     #print(scores)
