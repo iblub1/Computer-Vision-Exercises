@@ -213,7 +213,7 @@ def template_distance(v1, v2):
         s_d_list.append(s_d)
 
     distance = sum(s_d_list)
-    """
+"""
 
     return distance
 
@@ -273,16 +273,15 @@ def sliding_window(img, feat, step=1):
             window = window.flatten()
 
             distance = template_distance(sub_image, window)
-            #print(distance)  # For Debugging if someone wants to test this.
-            scores.append(distance)
 
+            scores.append(distance)
 
 
 
     #print(scores)
     # Get smallest distance
     min_score = min(scores)
-    #print(min_score)
+
 
     return min_score
 
@@ -340,7 +339,7 @@ def find_matching_with_scale(imgs, feats):
     nlevels = 3
     fsize = 5
     sigma = 1.4
-    results = []
+    total_results = []
 
 
     for img in imgs:
@@ -349,7 +348,31 @@ def find_matching_with_scale(imgs, feats):
             for feat in feats:
                 min_distance = sliding_window(p_img, feat)
                 result = [img, p_img, feat, min_distance]
-                results.append(result)
+                total_results.append(result)
+
+    """
+    img_results = []
+    for img in imgs:
+
+        feat_results = []
+        for feat in feats:
+            pyramid_imgs = gaussian_pyramid(img, nlevels, fsize, sigma)
+
+            p_results = []
+            for p_img in pyramid_imgs:
+                min_distance = sliding_window(p_img, feat)
+                p_results.append(min_distance)
+
+            min_p_result = min(p_results)
+            min_p_level = np.argmin(p_results)  # Returns 0,1,2 for level
+            p_result = (min_p_level, min_p_result) # This is the lowest distance for a single image feature combi using all pyramid levels.
+
+            feat_results.append(p_result)
+        min_feat_result = min(feat_results[1])
+        min_feat_arg = np.argmin(feat_results[1])
+        feat_result = (min_feat_arg, min_feat_result)
+
+        print("For this image we detect feature number", min_feat_arg)"""
 
 
     # TODO Calculate matches out of distances
@@ -357,6 +380,7 @@ def find_matching_with_scale(imgs, feats):
 
     #results.sort(key=lambda x: x[3])  # Sort list by distance OPTIONAL
 
-    for img, p_img, feat, min_distance in results:
+    for img, p_img, feat, min_distance in total_results:
         print(min_distance)
+
     return match
