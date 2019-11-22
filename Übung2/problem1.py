@@ -187,37 +187,33 @@ def template_distance(v1, v2):
     #
     import time # For timing calculation needed for multiple choice question
 
-    print("Vector 1 has shape:", v1.shape)
-    print("Vector 2 has shape:", v1.shape)
 
     # DOT PRODUCT
-    t_start = time.clock()
+
 
     distance = np.dot(v1, v2)  # use angle between two vectors as distance (dot product)
 
     # Normalized form with (cos(theta) = v1^T * v2 / |v1||v2|)
     # scaling factors
-    # n_v1 = np.linalg.norm(v1)
-    # n_v2 = np.linalg.norm(v2)
-    # distance = distance / (n_v1 * n_v2)
+    n_v1 = np.linalg.norm(v1)
+    n_v2 = np.linalg.norm(v2)
+    distance = distance / (n_v1 * n_v2)
 
-    print("DOT TIME: ", time.clock() - t_start)
 
     # SSD
-    t_start = time.clock()
 
     s_d_list = []
 
     ## Formula:
     #  E(I,T) = sum_i,j (I(i,j) - T(i, j))^2
     ##
+    """
     for i in range(v1.size):
         s_d = np.square(v1[i] - v2[i])
         s_d_list.append(s_d)
 
     distance = sum(s_d_list)
-
-    print("SSD TIME: ", time.clock() - t_start)
+    """
 
     return distance
 
@@ -250,6 +246,9 @@ def sliding_window(img, feat, step=1):
     img_rows, img_cols = img.shape
     win_rows, win_cols = window.shape
 
+    print("Our window has: ", win_rows, "rows. This should be equal or less than the rows of the image: ", img_rows)
+    print("Our window has: ", win_cols, "cols. This should be equal or less than the cols of the image: ", img_cols)
+
     # Sanity check that our window is actually smaller than our picture
     if win_rows <= img_rows and win_cols <= img_cols:
         rows, cols = img_rows - win_rows, img_cols - win_cols
@@ -258,18 +257,22 @@ def sliding_window(img, feat, step=1):
         for row in range(rows):
             for col in range(cols):
                 sub_image = img[row:row+win_rows:step, col:col+win_cols:step]  # This basically cuts out our window from the picture
-                
+
+                sub_image = sub_image.flatten()  # We flatten both matrices into a vector so we canculate distance between
+                window = window.flatten()
+
                 distance = template_distance(sub_image, window)
-                print(distance)  # For Debugging if someone wants to test this.
+                #print(distance)  # For Debugging if someone wants to test this.
                 scores.append(distance)
 
     else:
-        print("Bruh, window is bigger than the picture. Dafuq")
+        print("Bruh, window is bigger than the picture. Dafuq. Also if you can read this, the code will crash")
 
 
+    #print(scores)
     # Get smallest distance
     min_score = min(scores)
-    print(min_score)
+    #print(min_score)
 
     return min_score
 
@@ -331,15 +334,16 @@ def find_matching_with_scale(imgs, feats):
 
     # TODO I think we want to calculate the distance between all features and all faces at all scales.
     # TODO However I dont think that this code achievves this. We probably need to change this!
-    """
+
     for img in imgs:
         pyramid_imgs = gaussian_pyramid(img, nlevels, fsize, sigma)
         for p_img in pyramid_imgs:
             for feat in feats:
+                # TODO: MOMENTAN CRASHT sliding window, weil die skalierungen mit der Gaus pyramide kleiner werden als das feature zum sliden.
                 min_distance = sliding_window(p_img, feat)
                 distances.append(min_distance)
-    """
 
+    print("dasdasd")
     # TODO Calculate matches out of distances
 
     return match
