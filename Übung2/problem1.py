@@ -243,36 +243,11 @@ def sliding_window(img, feat, step=1):
     window = feat.copy()
     scores = []
     img_r, img_c = img.shape
+    # print('IMG-Shape = ', img.shape)
     win_r, win_c = window.shape
-
+    # print('WINDOW-Shape = ', window.shape)
     
-    # determine the number of pixels to pad the image
-    # get rozizontal and vertical radius to pad
-    p_r, p_c = np.ceil(win_r / 2 - 1), np.ceil(win_c / 2 - 1)
-
-    # padding the image to reach all pixels in the image
-    # symetric padding means, that the same pixels at the border
-    # will be appended in reversed order
-    print('p_r = ', p_r, p_c)
-    p_img = np.pad(img, ((p_r, p_r), (p_c, p_c)) , 'symmetric')
-
-    # iterate ver image rows and cols, which is now possible 
-    # since we used padding
-
-    for r in range(2, img_r, step):
-        for c in range(2, img_c, step):
-            sub_image = p_img[-p_r:r:p_r, -p_c:c:p_c]
-
-            sub_image = sub_image.flatten()  
-            window = window.flatten()
-
-            distance = template_distance(sub_image, window)
-
-            scores.append(distance)
-
-    min_score = min(scores)
-
-    '''
+    
     # Initialize window with size of feature
     window = feat.copy()
 
@@ -293,7 +268,10 @@ def sliding_window(img, feat, step=1):
         pad_height = win_cols - img_cols
         pad = np.max([pad_width, pad_height])
 
-        img = np.pad(img, pad_width=pad, mode="wrap")
+        # img = np.pad(img, pad_width=pad, mode="wrap")
+        img = np.pad(img, pad_width=pad,mode='constant')
+        # plt.imshow(img)
+        # plt.show()
         img_rows, img_cols = img.shape
 
         rows, cols = img_rows - win_rows, img_cols - win_cols
@@ -318,7 +296,7 @@ def sliding_window(img, feat, step=1):
     # Get smallest distance
     min_score = min(scores)
 
-    '''
+
     return min_score
 
 

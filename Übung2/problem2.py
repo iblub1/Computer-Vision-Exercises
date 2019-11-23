@@ -33,6 +33,7 @@ def load_faces(path, ext=".pgm"):
         for file in files:
             if ext in file:  # Check if file is pgm
                 img_path = os.path.join(root, file)
+                print(img_path)
                 img = plt.imread(img_path)  # Read the image
                 img_shape = img.shape
 
@@ -52,9 +53,9 @@ def load_faces(path, ext=".pgm"):
     Im angegebenen Ordner sind insgesamt nämlich 760 pixeln mit jeweils 96x84 Pixeln."""
 
     # In theory we need to return this:
-    #return img_array, img_shape
+    return img_array, img_shape
     
-    return np.random.random((16, 256)), (16, 16)
+    # return np.random.random((16, 256)), (16, 16)
 
 #
 # Task 2
@@ -162,13 +163,39 @@ def basis(u, s, p = 0.5):
         containing at most p (percentile) of the variance.
     
     """
-    # print('BASIS')
-    # print(u.shape)
-    # print(s.shape)
-    # print(p)
+    print('BASIS')
+    print(u.shape)
+    print(s.shape) # lambdas
+    print(p)
 
+    ##
+    # Formula: argmin_D sum_i^D lambda_i >= eta * sum_i^M lambda_i
+    ##
+
+    # 1. step: calculate the sum of the lambdas (variances) for all
+    #          M principal component to weight it by the given factor p
+    var_sum_M = np.sum(s)
+    # print('var_sum_M = ', var_sum_M)
     
-    return u
+    # 2. step: add together principle components (Basis-Vectors) till the sum 
+    #          of the Eigenvalues(Lambdas) is above the sum of weighted eigenvalues
+    #          from step 1
+    var_sum_D = 0
+    
+    i = 0 # index to iterate over -> the i where the condition is not met is D
+    while var_sum_D < var_sum_M:
+        var_sum_D += s[i]       # add new variance S[i] of PC[i]
+        i += 1
+    D_c = i
+    # print('D = ', D, " | var_sum_D = ", var_sum_D)
+    
+    ##
+    ## TODO -> var_sum_M ist ungefähr gliech mit var_sum_D und die Anzahl der
+    ##         PC-Basisvektoren unterscheidet sich nur um 1
+    ## 
+
+    v = u[:D_c + 1] # D + 1 to include the Index D
+    return v
 
 #
 # Task 5
@@ -186,8 +213,12 @@ def project(face_image, u):
         image_out: (N, ) vector, projection of face_image on 
         principal components
     """
-    
+
+    # TODO
+    # image_out = face_image * u
+
     return np.random.random((256, ))
+    # return image_out
 
 #
 # Task 6
