@@ -174,7 +174,7 @@ def basis(u, s, p = 0.5):
 
     # 1. step: calculate the sum of the lambdas (variances) for all
     #          M principal component to weight it by the given factor p
-    var_sum_M = np.sum(s)
+    var_sum_M = p * np.sum(s)
     # print('var_sum_M = ', var_sum_M)
     
     # 2. step: add together principle components (Basis-Vectors) till the sum 
@@ -182,19 +182,20 @@ def basis(u, s, p = 0.5):
     #          from step 1
     var_sum_D = 0
     
-    i = 0 # index to iterate over -> the i where the condition is not met is D
+    # index to iterate over -> the i where the condition is not met is D
+    i = 0 
     while var_sum_D < var_sum_M:
-        var_sum_D += s[i]       # add new variance S[i] of PC[i]
+        var_sum_D += s[i]       # add new variance S[i](Lambda) of PC[i](u)
         i += 1
     D_c = i
-    # print('D = ', D, " | var_sum_D = ", var_sum_D)
+    print('D = ', D_c, " | var_sum_D = ", var_sum_D)
     
     ##
     ## TODO -> var_sum_M ist ungefähr gliech mit var_sum_D und die Anzahl der
     ##         PC-Basisvektoren unterscheidet sich nur um 1
     ## 
 
-    v = u[:D_c + 1] # D + 1 to include the Index D
+    v = u[:D_c] # v is the new basis
     return v
 
 #
@@ -215,10 +216,13 @@ def project(face_image, u):
     """
 
     # TODO
-    # image_out = face_image * u
+    # Noch nicht getestet
+    image_out = face_image * u
+    print('u.dim = ', u.shape)
+    print('face = ',  face_image.shape)
 
     return np.random.random((256, ))
-    # return image_out
+    return image_out
 
 #
 # Task 6
