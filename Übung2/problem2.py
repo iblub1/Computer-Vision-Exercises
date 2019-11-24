@@ -129,12 +129,12 @@ def compute_pca(X):
     # If you want to read more: https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
 
     # L = (1/N) * S^2
-    N = X.shape[0]
+    N, M = X.shape
     lmb = np.square(S) / N
 
     print('L = ', lmb.shape)
-    print('N = ', X.shape[0])
-    print('M = ', X.shape[1])
+    print('N = ', N)
+    print('M = ', M)
     print('X = ', X.shape, " = (N, M)")
     print('U = ', U.shape, " = (N, N)")
     print('S = ', S.shape, " = (N, )")
@@ -190,12 +190,10 @@ def basis(u, s, p = 0.5):
     D_c = i
     print('D = ', D_c, " | var_sum_D = ", var_sum_D)
     
-    ##
-    ## TODO -> var_sum_M ist ungefähr gliech mit var_sum_D und die Anzahl der
-    ##         PC-Basisvektoren unterscheidet sich nur um 1
-    ## 
 
-    v = u[:D_c] # v is the new basis
+    v = u[:, :D_c] # v is the new basis
+    print('u: ', u.shape)
+    print('v: ', v.shape)
     return v
 
 #
@@ -217,11 +215,16 @@ def project(face_image, u):
 
     # TODO
     # Noch nicht getestet
-    image_out = face_image * u
     print('u.dim = ', u.shape)
     print('face = ',  face_image.shape)
+    # print('imaga_out = ', image_out.shape)
 
-    return np.random.random((256, ))
+    
+
+    # Dims: (M, N) x (N, ) = (M, )
+    image_out = u_.T * face_image
+
+    # return np.random.random((256, ))
     return image_out
 
 #
@@ -268,6 +271,12 @@ def search(Y, x, u, top_n):
     Returns:
         Y: (top_n, M)
     """
+
+    print('Y: ', Y.shape)
+    print('x: ', x.shape)
+    print('u: ', u.shape)
+    print('top_n: ', top_n)
+    
     
     return np.random.random((top_n, 256))
 
