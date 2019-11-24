@@ -26,35 +26,27 @@ def load_faces(path, ext=".pgm"):
     #
     # You code here
     #
-
     images = []
     img_shape = (0, 0)
+
     for root, dirs, files in os.walk(path):
         for file in files:
-            if ext in file:  # Check if file is pgm
+            if ext in file: # check if file is of pgm-type
                 img_path = os.path.join(root, file)
-                print(img_path)
-                img = plt.imread(img_path)  # Read the image
+                img = plt.imread(img_path)   # Read the image
                 img_shape = img.shape
-
-                img = img.flatten()  # Transform 2D image into vector M = height x width
-
+                img = img.flatten() # Transform 2D image into vector M = height x width
                 images.append(img)
 
     print("We have 760 images. We loaded succesfully:", len(images), " images")
+    img_array = np.asarray(images)                
 
-    img_array = np.asarray(images)
-    print("Our img_array needs shape (760, 8064). We have:", img_array.shape)
-    plt.imshow(img_array[0].reshape(img_shape))  # For Debugging: The pictures have 96x84 pixels or 8064 total.
+    # plt.imshow(img_array[0].reshape(img_shape))  # For Debugging: The pictures have 96x84 pixels or 8064 total.
     print("Each image has shape: ", img_shape)
     print("\n")
 
-    """TODO: Ich versteh leider nicht, wie die darauf kommen das wir nur 16 Bilder haben mit jeweils 16x16 pixeln. 
-    Im angegebenen Ordner sind insgesamt nämlich 760 pixeln mit jeweils 96x84 Pixeln."""
-
-    # In theory we need to return this:
     return img_array, img_shape
-    
+
     # return np.random.random((16, 256)), (16, 16)
 
 #
@@ -111,37 +103,43 @@ def compute_pca(X):
         u: (M, N) bases with principal components
         lmb: (N, ) corresponding variance
     """
+    # Structure of X: every of the N rows has M values
+    #     / - x_1 - \
+    # X = | - ... - | , x_i in R^M
+    #     \ - x_N - /
 
-    # Center matrix by subtracting COLUMN mean
-    mean_vector = X.mean(axis=0)
+    # center the data by subtracting the mean
+    mean_vector = X.mean(axis=0)    # axis = 0 (rows)
     print("Shape of X matrix: ", X.shape)
     print("Shape of mean_vector: ", mean_vector.shape)
     print("Mean vector should have the same length as the X matrix columns")
 
+    # (M,1)-Dimensional Vector will be broadcasted to size (M, N)
     X = X - mean_vector
 
     # Now we use SVD to calculate our Eigenvalues (variances) and Eigenvectors (direction of variance)
-    U, S, vh = np.linalg.svd(X, full_matrices=False)
+    # N x M -> 
+
+    # transpose the normalized X matrix
+    X = X.T
+    U, S, _ = np.linalg.svd(X, full_matrices=False)
+    #  X = USV => (M,N) = (M,N) x (N,N) x (N,N)
+    print('U = {}'.format(U.shape))     # (M, N)
+    print('S = {}'.format(S.shape))     # (N, N) 
+    
+    
+    N = X.shape[1]
+    # L = (1/N) * S^2
+    lmb = np.square(S) / N
 
     print("We have this mean Eigenvalues: ", S.size)
 
-    # TODO Return Eigenvectors and Eigenvalues (principal components and variance)
-    # If you want to read more: https://stats.stackexchange.com/questions/134282/relationship-between-svd-and-pca-how-to-use-svd-to-perform-pca
 
-    # L = (1/N) * S^2
-    N, M = X.shape
-    lmb = np.square(S) / N
-
-    print('L = ', lmb.shape)
-    print('N = ', N)
-    print('M = ', M)
-    print('X = ', X.shape, " = (N, M)")
-    print('U = ', U.shape, " = (N, N)")
-    print('S = ', S.shape, " = (N, )")
-
+    
     # return np.random.random((100, 10)), np.random.random(10)
-    return U, lmb
 
+    # Dimenstions of output (M, N) and (N,)
+    return U, lmb
 #
 # Task 4
 #
@@ -163,11 +161,6 @@ def basis(u, s, p = 0.5):
         containing at most p (percentile) of the variance.
     
     """
-    print('BASIS')
-    print(u.shape)
-    print(s.shape) # lambdas
-    print(p)
-
     ##
     # Formula: argmin_D sum_i^D lambda_i >= eta * sum_i^M lambda_i
     ##
@@ -175,25 +168,25 @@ def basis(u, s, p = 0.5):
     # 1. step: calculate the sum of the lambdas (variances) for all
     #          M principal component to weight it by the given factor p
     var_sum_M = p * np.sum(s)
-    # print('var_sum_M = ', var_sum_M)
-    
+
     # 2. step: add together principle components (Basis-Vectors) till the sum 
     #          of the Eigenvalues(Lambdas) is above the sum of weighted eigenvalues
     #          from step 1
     var_sum_D = 0
-    
+
     # index to iterate over -> the i where the condition is not met is D
-    i = 0 
+    i = 0
     while var_sum_D < var_sum_M:
         var_sum_D += s[i]       # add new variance S[i](Lambda) of PC[i](u)
         i += 1
     D_c = i
+
     print('D = ', D_c, " | var_sum_D = ", var_sum_D)
     
-
-    v = u[:, :D_c] # v is the new basis
+    v = u[:, :D_c] # v is the new basis of D principal components
     print('u: ', u.shape)
     print('v: ', v.shape)
+
     return v
 
 #
@@ -212,18 +205,20 @@ def project(face_image, u):
         image_out: (N, ) vector, projection of face_image on 
         principal components
     """
+    print('PROJECTION')
+    print('U = ', u.shape)
+    print('face_image = ', face_image.shape)
 
-    # TODO
-    # Noch nicht getestet
-    print('u.dim = ', u.shape)
-    print('face = ',  face_image.shape)
-    # print('imaga_out = ', image_out.shape)
+    projection = np.dot(u.T, face_image)
+    print('projection = ', projection.shape)
 
-    
+    reconstruction = np.dot(u, projection)
+    print('reconstruction = ', reconstruction.shape)
 
-    # Dims: (M, N) x (N, ) = (M, )
-    image_out = u_.T * face_image
+    image_out = reconstruction
+    print('image_out = ', image_out.shape)
 
+        
     # return np.random.random((256, ))
     return image_out
 
