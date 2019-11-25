@@ -2,6 +2,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from PIL import Image
+from utils import *
 
 #
 # Task 1
@@ -236,8 +237,8 @@ class NumberOfComponents(object):
 
     # choice of the method
     OBSERVATION = {
-                1: "The more principal components we use, the sharper is the image",
-                2: "The fewer principal components we use, the smaller is the re-projection error",
+                1: "The more principal components we use, the sharper is the image",                                    # Yes -> Page 48
+                2: "The fewer principal components we use, the smaller is the re-projection error",                     
                 3: "The first principal components mostly correspond to local features, e.g. nose, mouth, eyes",
                 4: "The first principal components predominantly contain global structure, e.g. complete face",
                 5: "The variations in the last principal components are perceptually insignificant; these bases can be neglected in the projection"
@@ -252,10 +253,6 @@ class NumberOfComponents(object):
 
         return (1, 4)
 
-
-# L2 - Distance metric
-def d(x, y):
-    return np.sqrt(np.sum(np.power(y - x, 2)))
 
 #
 # Task 7
@@ -298,32 +295,28 @@ def search(Y, x, u, top_n):
     Y_a = np.asarray(Y_a)
     print('Y_a = ', Y_a.shape)
 
-    # calculate the error between the image representations
-    sq_diff = np.power(x_a - Y_a, 2)
+    diff = x_a - Y_a
+    norm = np.linalg.norm(diff, axis=1)
+    print('norm = ', norm.shape)
 
-    # sum the squared differences for every image (here: 760)
-    s = np.sum(sq_diff, axis=1)
-    print('s = ', s.shape)
-
-    # finally the square root part of the L2-Norm
-    sq = np.sqrt(s)
-    print('sq = ', sq.shape)
-    
-    max_n = np.argmax(sq)
-
-    im = Y_a[max_n].reshape((96, 84))
-    plt.imshow(im)
-    plt.title('Y_a')
-    plt.show()
-
-    im2 = x_a.reshape((96, 84))
-    plt.imshow(im2)
-    plt.title('x_a')
-    plt.show()
-
+    ## Sanity check: PASSED
+    # min_n = np.argmin(norm)
+    # Y_min = Y_a[min_n]
+    # im = Y_a[min_n]
+    # im2 = x_a
+    # ims = np.stack([im, im2], 0)
+    # show_images(ims, (96, 84))
+    # plt.show()
 
     
-    return np.random.random((top_n, 256))
+    # retrieve the top_n minimal indices of the differences
+    min_idx = norm.argsort()[:top_n]
+
+    # vector of images nearest to reference image
+    Y_top = Y[min_idx, :]
+    
+    # return np.random.random((top_n, 256))
+    return Y_top
 
 #
 # Task 8
@@ -345,4 +338,18 @@ def interpolate(x1, x2, u, N):
         image; Y[0] == project(x1, u); Y[-1] == project(x2, u)
     """
     
-    return np.random.random((3, 256))
+    x1_a = project(x1, u)
+    x2_a = project(x2, u)
+
+    t = np.linspace(x1, x2, N)
+    print('t = ', t.shape)
+
+    x1_inter = x1_a + t * x2_a
+    x2_inter = x2_a + t * x1_a
+    
+    y0 = project(x1_inter, u)
+    y1 = project(x2_inter, u)
+    Y = np.array([[y0], [y1]])
+    # return np.random.random((3, 256))
+    print('Y = ', Y.shape)
+    return Y

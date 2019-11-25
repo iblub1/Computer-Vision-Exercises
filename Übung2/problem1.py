@@ -90,7 +90,8 @@ def gaussian_kernel(fsize, sigma):
     ##
 
     return gauss_2D
-- 1
+
+
 def downsample_x2(x, factor=2):
     '''
     Downsampling an image by a factor of 2
@@ -146,9 +147,7 @@ def gaussian_pyramid(img, nlevels, fsize, sigma):
     # first element of the pyramid is the original image
     GP.append(img_tmp)
 
-    # inspired by:
-    # https://cabjudo.github.io/machine_perception/pyramids/
-
+    
     # start with index 1 since index 0 is already occupied by 
     # the original image
     for level in range(1, nlevels):
@@ -243,9 +242,7 @@ def sliding_window(img, feat, step=1):
     window = feat.copy()
     scores = []
     img_r, img_c = img.shape
-    # print('IMG-Shape = ', img.shape)
     win_r, win_c = window.shape
-    # print('WINDOW-Shape = ', window.shape)
     
     
     # Initialize window with size of feature

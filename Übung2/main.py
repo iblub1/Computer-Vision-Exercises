@@ -91,8 +91,8 @@ def problem2():
     show_images(top5, hw)
 
     # Taksk 8. Interpolation
-    ints = p2.interpolate(test_face2, test_face, b, 5)
-    show_images(ints, hw)
+    # ints = p2.interpolate(test_face2, test_face, b, 5)
+    # show_images(ints, hw)
 
     plt.show()
 
@@ -100,4 +100,4 @@ if __name__ == "__main__":
     print("Problem 1 starts here: \n")
     problem1()
     print("Problem 2 starts here: \n")
-    problem2()
+    # problem2()
