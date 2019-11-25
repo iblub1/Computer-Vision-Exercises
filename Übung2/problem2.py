@@ -12,7 +12,7 @@ def load_faces(path, ext=".pgm"):
     where N is the number of face images and
     d is the dimensionality (height*width for greyscale).
     
-    Hint: os.walk() supports recursive listing of files 
+    Hint: os.walk() supposrts recursive listing of files 
     and directories in a path
     
     Args:
@@ -39,12 +39,12 @@ def load_faces(path, ext=".pgm"):
                 img = img.flatten() # Transform 2D image into vector M = height x width
                 images.append(img)
 
-    print("We have 760 images. We loaded succesfully:", len(images), " images")
+    # print("We have 760 images. We loaded succesfully:", len(images), " images")
     img_array = np.asarray(images)                
 
     # plt.imshow(img_array[0].reshape(img_shape))  # For Debugging: The pictures have 96x84 pixels or 8064 total.
-    print("Each image has shape: ", img_shape)
-    print("\n")
+    # print("Each image has shape: ", img_shape)
+    # print("\n")
 
     return img_array, img_shape
 
@@ -111,9 +111,9 @@ def compute_pca(X):
 
     # center the data by subtracting the mean
     mean_vector = X.mean(axis=0)    # axis = 0 (rows)
-    print("Shape of X matrix: ", X.shape)
-    print("Shape of mean_vector: ", mean_vector.shape)
-    print("Mean vector should have the same length as the X matrix columns")
+    # print("Shape of X matrix: ", X.shape)
+    # print("Shape of mean_vector: ", mean_vector.shape)
+    # print("Mean vector should have the same length as the X matrix columns")
 
     # (M,1)-Dimensional Vector will be broadcasted to size (M, N)
     X = X - mean_vector
@@ -125,15 +125,15 @@ def compute_pca(X):
     X = X.T
     U, S, _ = np.linalg.svd(X, full_matrices=False)
     #  X = USV => (M,N) = (M,N) x (N,N) x (N,N)
-    print('U = {}'.format(U.shape))     # (M, N)
-    print('S = {}'.format(S.shape))     # (N, N) 
+    # print('U = {}'.format(U.shape))     # (M, N)
+    # print('S = {}'.format(S.shape))     # (N, N) 
     
     
     N = X.shape[1]
     # L = (1/N) * S^2
     lmb = np.square(S) / N
 
-    print("We have this mean Eigenvalues: ", S.size)
+    # print("We have this mean Eigenvalues: ", S.size)
 
 
     
@@ -182,11 +182,11 @@ def basis(u, s, p = 0.5):
         i += 1
     D_c = i
 
-    print('D = ', D_c, " | var_sum_D = ", var_sum_D)
+    # print('D = ', D_c, " | var_sum_D = ", var_sum_D)
     
     v = u[:, :D_c] # v is the new basis of D principal components
-    print('u: ', u.shape)
-    print('v: ', v.shape)
+    # print('u: ', u.shape)
+    # print('v: ', v.shape)
 
     return v
 
@@ -272,19 +272,19 @@ def search(Y, x, u, top_n):
     """
 
     # D is the number of features
-    print('Y: ', Y.shape)   # (N, D) -> flattened images
-    print('x: ', x.shape)   # (1, D) -> image to compare to
-    print('u: ', u.shape)   # (M, D) -> basis vector of D vectors
-    # number of images to retrieve that are the most similar to thegiven image x
-    print('top_n: ', top_n) 
+    # print('Y: ', Y.shape)   # (N, D) -> flattened images
+    # print('x: ', x.shape)   # (1, D) -> image to compare to
+    # print('u: ', u.shape)   # (M, D) -> basis vector of D vectors
+    # # number of images to retrieve that are the most similar to thegiven image x
+    # print('top_n: ', top_n) 
 
     ## inspired by: http://www.vision.jhu.edu/teaching/vision08/Handouts/case_study_pca1.pdf
     ## nicht
 
-    print('SEARCH')
+    # print('SEARCH')
     
     x_a = project(x, u)   # Get the coefficients from xa = [a_1, ..., a_D]
-    print('x_a = ', x_a.shape)
+    # print('x_a = ', x_a.shape)
     
     Y_a = []
 
@@ -293,11 +293,11 @@ def search(Y, x, u, top_n):
     for i in range(N):
         Y_a.append(project(Y[i, :], u))  # a_i coefficients of image Y[i]
     Y_a = np.asarray(Y_a)
-    print('Y_a = ', Y_a.shape)
+    # print('Y_a = ', Y_a.shape)
 
     diff = x_a - Y_a
     norm = np.linalg.norm(diff, axis=1)
-    print('norm = ', norm.shape)
+    # print('norm = ', norm.shape)
 
     ## Sanity check: PASSED
     # min_n = np.argmin(norm)
@@ -342,7 +342,7 @@ def interpolate(x1, x2, u, N):
     x2_a = project(x2, u)
 
     t = np.linspace(x1, x2, N)
-    print('t = ', t.shape)
+    # print('t = ', t.shape)
 
     x1_inter = x1_a + t * x2_a
     x2_inter = x2_a + t * x1_a
@@ -351,5 +351,5 @@ def interpolate(x1, x2, u, N):
     y1 = project(x2_inter, u)
     Y = np.array([[y0], [y1]])
     # return np.random.random((3, 256))
-    print('Y = ', Y.shape)
+    # print('Y = ', Y.shape)
     return Y

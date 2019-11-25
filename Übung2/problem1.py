@@ -75,7 +75,6 @@ def gaussian_kernel(fsize, sigma):
 
     # calculate outer product of the 1D gaussian filter to get a
     # 2D filter
-
     gauss_2D = np.outer(gauss, gauss)
     
     # normalization factor of the gaussian
@@ -89,7 +88,7 @@ def gaussian_kernel(fsize, sigma):
     # plt.show()
     ##
 
-    return gauss_2D
+    return gauss_2D / np.sum(np.abs(gauss_2D))
 
 
 def downsample_x2(x, factor=2):

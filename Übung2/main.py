@@ -98,6 +98,6 @@ def problem2():
 
 if __name__ == "__main__":
     print("Problem 1 starts here: \n")
-    problem1()
+    # problem1()
     print("Problem 2 starts here: \n")
-    # problem2()
+    problem2()
