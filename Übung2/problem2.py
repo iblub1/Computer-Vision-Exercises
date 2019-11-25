@@ -205,20 +205,23 @@ def project(face_image, u):
         image_out: (N, ) vector, projection of face_image on 
         principal components
     """
-    print('PROJECTION')
-    print('U = ', u.shape)
-    print('face_image = ', face_image.shape)
+    # print('PROJECTION')
+    # print('U = ', u.shape)
+    # print('face_image = ', face_image.shape)
 
     projection = np.dot(u.T, face_image)
-    print('projection = ', projection.shape)
+    # print('projection = ', projection.shape)
 
     reconstruction = np.dot(u, projection)
-    print('reconstruction = ', reconstruction.shape)
+    # print('reconstruction = ', reconstruction.shape)
 
     image_out = reconstruction
-    print('image_out = ', image_out.shape)
+    # print('image_out = ', image_out.shape)
+    
+    # im = image_out.reshape((96, 84))
+    # plt.imshow(im)
+    # plt.show()
 
-        
     # return np.random.random((256, ))
     return image_out
 
@@ -247,8 +250,12 @@ class NumberOfComponents(object):
         For example: (1, 3)
         """
 
-        return 0
+        return (1, 4)
 
+
+# L2 - Distance metric
+def d(x, y):
+    return np.sqrt(np.sum(np.power(y - x, 2)))
 
 #
 # Task 7
@@ -267,11 +274,54 @@ def search(Y, x, u, top_n):
         Y: (top_n, M)
     """
 
-    print('Y: ', Y.shape)
-    print('x: ', x.shape)
-    print('u: ', u.shape)
-    print('top_n: ', top_n)
+    # D is the number of features
+    print('Y: ', Y.shape)   # (N, D) -> flattened images
+    print('x: ', x.shape)   # (1, D) -> image to compare to
+    print('u: ', u.shape)   # (M, D) -> basis vector of D vectors
+    # number of images to retrieve that are the most similar to thegiven image x
+    print('top_n: ', top_n) 
+
+    ## inspired by: http://www.vision.jhu.edu/teaching/vision08/Handouts/case_study_pca1.pdf
+    ## nicht
+
+    print('SEARCH')
     
+    x_a = project(x, u)   # Get the coefficients from xa = [a_1, ..., a_D]
+    print('x_a = ', x_a.shape)
+    
+    Y_a = []
+
+    N = Y.shape[0]
+    # iterate over all N D-dimensional vectors
+    for i in range(N):
+        Y_a.append(project(Y[i, :], u))  # a_i coefficients of image Y[i]
+    Y_a = np.asarray(Y_a)
+    print('Y_a = ', Y_a.shape)
+
+    # calculate the error between the image representations
+    sq_diff = np.power(x_a - Y_a, 2)
+
+    # sum the squared differences for every image (here: 760)
+    s = np.sum(sq_diff, axis=1)
+    print('s = ', s.shape)
+
+    # finally the square root part of the L2-Norm
+    sq = np.sqrt(s)
+    print('sq = ', sq.shape)
+    
+    max_n = np.argmax(sq)
+
+    im = Y_a[max_n].reshape((96, 84))
+    plt.imshow(im)
+    plt.title('Y_a')
+    plt.show()
+
+    im2 = x_a.reshape((96, 84))
+    plt.imshow(im2)
+    plt.title('x_a')
+    plt.show()
+
+
     
     return np.random.random((top_n, 256))
 
