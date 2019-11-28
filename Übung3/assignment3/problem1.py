@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.signal import convolve2d
 
 #
@@ -31,6 +32,13 @@ def load_image(path):
     Returns:
         img: numpy array containing image in greyscale
     '''
+
+    img = plt.imread(path)  # Read the image
+
+    # Convert to gray scale using this forumlar:  Y' = 0.2989 R + 0.5870 G + 0.1140 B
+    img = np.dot(img[..., :3], [0.2989, 0.5870, 0.1140])
+
+    # TODO: Return img after code is tested
     return np.empty((300, 300))
 
 def smoothed_laplacian(image, sigmas, lap_kernel):
@@ -44,6 +52,12 @@ def smoothed_laplacian(image, sigmas, lap_kernel):
         response: 3 dimensional numpy array. The first (index 0) dimension is for scale
                   corresponding to sigmas
     '''
+
+    # TODO 1.) apply laplacian_kernel to image
+
+    # TODO 2.) apply gaussian_kernel to image
+
+
     return np.empty((len(sigmas), *image.shape))
 
 def laplacian_of_gaussian(image, sigmas):
@@ -121,6 +135,11 @@ def laplacian_kernel():
     Returns:
         laplacian kernel
     '''
+
+    """ Meine Quelle für den Kernel: https://en.wikipedia.org/wiki/Discrete_Laplace_operator#Image_Processing"""
+    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
+
+    #TODO: Return kernel after code is tested
     return np.random.random((3, 3))
 
 

@@ -9,8 +9,8 @@ from PIL import Image
 import problem1 as p1
 
 def problem1():
-    # Replace it with the right range
-    sigmas = [0.1, 0.2, 0.3]
+    # List of sigmas from 1 to 4 in 0.25 steps
+    sigmas = np.linspace(1, 4, 13).tolist()
 
     image = p1.load_image("data/goat.jpeg")
     lap_kernel = p1.laplacian_kernel()
