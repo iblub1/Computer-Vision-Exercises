@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""This is version 3 of the file"""
 
 def load_pts_features(path):
     """ Load interest points and SIFT features.
@@ -160,12 +161,10 @@ def find_matches(feats1, feats2, rT=0.8):
     return idx1, idx2
 
 
-def final_homography(im1, im2, pts1, pts2, feats1, feats2):
+def final_homography(pts1, pts2, feats1, feats2):
     """ re-estimate the homography based on all inliers
 
     Args:
-       im1: image 1, array (413, 481, 3)
-       im2: image 2, array (375, 450, 3)
        pts1: the coordinates of interest points in img1, array (N, 2)
        pts2: the coordinates of interest points in img2, array (M, 2)
        feats1: SIFT descriptors of interest points in img1, array (N, 128)

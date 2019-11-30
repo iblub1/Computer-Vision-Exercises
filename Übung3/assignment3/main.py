@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
+# Version 3of the main
 
 #
 # Problem 1
@@ -49,7 +50,7 @@ def problem2():
     plt.plot(pts2[:, 0], pts2[:, 1], 'ro', markersize=1.3)
 
     # display algined image
-    H, ix1, ix2 = p2.final_homography(im1, im2, pts1, pts2, feats_array[0],
+    H, ix1, ix2 = p2.final_homography(pts1, pts2, feats_array[0],
                                       feats_array[1])
 
     pts1 = pts1[ix1]
@@ -83,4 +84,4 @@ def problem2():
 
 if __name__ == "__main__":
     problem1()
-    problem2()
+    #problem2()

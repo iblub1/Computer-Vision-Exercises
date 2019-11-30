@@ -7,7 +7,7 @@ from scipy.signal import convolve2d
 # Hint: you can make use of this function
 # to create Gaussian kernels for different sigmas
 #
-def gaussian_kernel(fsize=3, sigma=1):
+def gaussian_kernel(fsize=7, sigma=1):
     '''
     Define a Gaussian kernel
 
@@ -21,29 +21,39 @@ def gaussian_kernel(fsize=3, sigma=1):
     _x = _y = (fsize - 1) / 2
     x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]
     G = np.exp(-0.5 * (x**2 + y**2) / sigma**2)
-    return G / G.sum()
+    return G / (2 * math.pi * sigma**2)
 
 def load_image(path):
     ''' 
-    The input image is a)loaded, b) converted to greyscale, and c) converted to numpy array
+    The input image is a) loaded, b) converted to greyscale, and
+     c) converted to numpy array [-1, 1].
 
     Args:
         path: the name of the inpit image
     Returns:
         img: numpy array containing image in greyscale
     '''
-
     img = plt.imread(path)  # Read the image
 
     # Convert to gray scale using this forumlar:  Y' = 0.2989 R + 0.5870 G + 0.1140 B
     img = np.dot(img[..., :3], [0.2989, 0.5870, 0.1140])
 
+    # Min Max Normalising
+    img = 2 * (img - img.min()) / (img.max() - img.min()) - 1
+
+    # Debug
+    plt.title("GOAT")
+    plt.imshow(img, cmap="gray")
+    plt.show()
     # TODO: Return img after code is tested
+
     return np.empty((300, 300))
 
 def smoothed_laplacian(image, sigmas, lap_kernel):
     ''' 
-    The image is first smoothed by gaussian kernels for each sigma in the list of sigmas. Then laplacian operator is applied to each one.
+    Then laplacian operator is applied to the image and
+     smoothed by gaussian kernels for each sigma in the list of sigmas.
+
 
     Args:
         Image: input image
@@ -52,12 +62,6 @@ def smoothed_laplacian(image, sigmas, lap_kernel):
         response: 3 dimensional numpy array. The first (index 0) dimension is for scale
                   corresponding to sigmas
     '''
-
-    # TODO 1.) apply laplacian_kernel to image
-
-    # TODO 2.) apply gaussian_kernel to image
-
-
     return np.empty((len(sigmas), *image.shape))
 
 def laplacian_of_gaussian(image, sigmas):
@@ -101,8 +105,11 @@ def LoG_kernel(fsize=9, sigma=1):
 
 def blob_detector(response):
     '''
-    Find points with a response which is either maximum or minimum in their 3x3x3 neighborhood of scale space array.
-    Tip: Ignore the first and the last row in every dimension for simplicity.
+    Find unique extrema points (maximum or minimum) in the response using 9x9 spatial neighborhood 
+    and across the complete scale dimension.
+    Tip: Ignore the boundary windows to avoid the need of padding for simplicity.
+    Tip 2: unique here means skipping an extrema point if there is another point in the local window
+            with the same value
     Args:
         response: 3 dimensional response from LoG operator in scale space.
 
@@ -113,7 +120,7 @@ def blob_detector(response):
 
 def DoG(sigma):
     '''
-    Define a DoG kernel. Please, use 7x7 kernels.
+    Define a DoG kernel. Please, use 9x9 kernels.
     Tip: First calculate the two gaussian kernels and return their difference. This is an approximation for LoG.
 
     Args:
@@ -135,11 +142,11 @@ def laplacian_kernel():
     Returns:
         laplacian kernel
     '''
-
     """ Meine Quelle für den Kernel: https://en.wikipedia.org/wiki/Discrete_Laplace_operator#Image_Processing"""
     kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
 
     #TODO: Return kernel after code is tested
+
     return np.random.random((3, 3))
 
 
