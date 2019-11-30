@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-# Version 3of the main
+"""This is version 3 of the file"""
 
 #
 # Problem 1

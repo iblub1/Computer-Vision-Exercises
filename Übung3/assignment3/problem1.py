@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import convolve2d
 
+"""This is version 3 of the file"""
+
 #
 # Hint: you can make use of this function
 # to create Gaussian kernels for different sigmas
@@ -21,7 +23,7 @@ def gaussian_kernel(fsize=7, sigma=1):
     _x = _y = (fsize - 1) / 2
     x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]
     G = np.exp(-0.5 * (x**2 + y**2) / sigma**2)
-    return G / (2 * math.pi * sigma**2)
+    return G / np.sum(G)  # Needed to fix this, since we need normalizing for discrete function!
 
 def load_image(path):
     ''' 
@@ -38,16 +40,14 @@ def load_image(path):
     # Convert to gray scale using this forumlar:  Y' = 0.2989 R + 0.5870 G + 0.1140 B
     img = np.dot(img[..., :3], [0.2989, 0.5870, 0.1140])
 
-    # Min Max Normalising
+    # Min Max Normalising von -1 bis 1
     img = 2 * (img - img.min()) / (img.max() - img.min()) - 1
 
     # Debug
-    plt.title("GOAT")
-    plt.imshow(img, cmap="gray")
-    plt.show()
-    # TODO: Return img after code is tested
+    #plt.imshow(img, cmap="gray")
+    #plt.show()
 
-    return np.empty((300, 300))
+    return img
 
 def smoothed_laplacian(image, sigmas, lap_kernel):
     ''' 
@@ -62,7 +62,20 @@ def smoothed_laplacian(image, sigmas, lap_kernel):
         response: 3 dimensional numpy array. The first (index 0) dimension is for scale
                   corresponding to sigmas
     '''
-    return np.empty((len(sigmas), *image.shape))
+    img = image.copy()
+
+    images = []
+    for sig in sigmas:
+        # Ist Kommunativ, also Reihenfolge ist egal
+        my_img = convolve2d(img, lap_kernel, mode="same")  # Apply Laplacian Operator 
+        my_img = convolve2d(my_img, gaussian_kernel(sigma=sig), mode="same")  # Apply Gaussian Filter
+
+        images.append(my_img)
+
+    images = np.asarray(images)  # Making List and Converting to array is faster than filling array. 
+    #print(images.shape) # Debugging/Testing
+
+    return images
 
 def laplacian_of_gaussian(image, sigmas):
     ''' 
@@ -142,12 +155,12 @@ def laplacian_kernel():
     Returns:
         laplacian kernel
     '''
-    """ Meine Quelle für den Kernel: https://en.wikipedia.org/wiki/Discrete_Laplace_operator#Image_Processing"""
+
+    """ Finite Differenzen für zweite Ableitung: I_xx = [1 -2 1] und I_yy = [1 -2 1]^T  
+    Das dann in 3D sprich Rest mit Nullen auffüllen und beide addieren."""
     kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
 
-    #TODO: Return kernel after code is tested
-
-    return np.random.random((3, 3))
+    return kernel
 
 
 class Method(object):
