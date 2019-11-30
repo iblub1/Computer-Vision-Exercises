@@ -66,7 +66,7 @@ def smoothed_laplacian(image, sigmas, lap_kernel):
 
     images = []
     for sig in sigmas:
-        # Ist Kommunativ, also Reihenfolge ist egal
+        # Ist kommutativ, also Reihenfolge ist egal
         my_img = convolve2d(img, lap_kernel, mode="same")  # Apply Laplacian Operator 
         my_img = convolve2d(my_img, gaussian_kernel(sigma=sig), mode="same")  # Apply Gaussian Filter
 
@@ -129,6 +129,38 @@ def blob_detector(response):
     Returns:
         list of 3-tuples (scale_index, row, column) containing the detected points.
     '''
+    #print(response.shape[0], response.shape[1], response.shape[2])  # Debugging
+    n_pics = response.shape[0]
+    n_rows = response.shape[1]
+    n_cols = response.shape[2]
+
+    pad = 4 # Cutout = index 4, weil wir 9x9 Kernel benutzen und lauft Aufgabenstellung nicht padden wollen.
+
+    unique_local_extrema = []
+    for i in range(pad, n_rows - 4):
+        for j in range(pad, n_cols -4):
+            # Create 16x9x9 window
+            window = response[:, (i-pad):(i+pad+1), (j-pad):(j+pad+1)]  
+            assert window.shape == (16,9,9)
+            
+            # Min und Max der "Achse" über alle Sigmas
+            min_val = np.argmin(window[:, 4, 4])
+            max_val = np.argmax(window[:, 4, 4])
+
+            # Überprüfe ob extrama in dem Fenster größer sind als Extrema auf der Achse :
+            local_mins = np.argwhere(window <= np.amin(window[:, 4, 4]))
+            local_maxs = np.argwhere(window >= np.amax(window[:, 4, 4]))
+
+            # Falls nicht, dann handelt es sich bei den Achsenminima, um ein unique extrema.
+            if len(local_mins) == 1:
+                unique_local_extrema.append((min_val, i, j))
+
+            if len(local_maxs) == 1:
+                unique_local_extrema.append((max_val, i, j))
+
+    print("LEEEEEEEEROOOOOOYYYY JEEEEENKIIINNSSS")
+    print(unique_local_extrema)
+
     return []
 
 def DoG(sigma):

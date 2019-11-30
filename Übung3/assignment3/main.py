@@ -10,15 +10,16 @@ from PIL import Image
 import problem1 as p1
 
 def problem1():
-    # List of sigmas from 1 to 4 in 0.25 steps
-    sigmas = np.linspace(1, 4, 13).tolist()
+    # List of sigmas from 0.25 to 4 in 0.25 steps
+    sigmas = np.linspace(0.25, 4, 16).tolist()
 
     image = p1.load_image("data/goat.jpeg")
     lap_kernel = p1.laplacian_kernel()
 
     method1_output = p1.blob_detector(p1.smoothed_laplacian(image, sigmas, lap_kernel))
-    method2_output = p1.blob_detector(p1.laplacian_of_gaussian(image, sigmas))
-    method3_output = p1.blob_detector(p1.difference_of_gaussian(image, sigmas))
+    # TODO Uncomment later
+    #method2_output = p1.blob_detector(p1.laplacian_of_gaussian(image, sigmas))
+    #method3_output = p1.blob_detector(p1.difference_of_gaussian(image, sigmas))
 
 #
 # Problem 2
