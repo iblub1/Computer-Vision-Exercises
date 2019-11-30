@@ -134,7 +134,11 @@ def blob_detector(response):
     n_rows = response.shape[1]
     n_cols = response.shape[2]
 
-    pad = 4 # Cutout = index 4, weil wir 9x9 Kernel benutzen und lauft Aufgabenstellung nicht padden wollen.
+    pad = 4 # Cutout = index 4 (Wert an der fünften Stelle), weil wir 9x9 Kernel benutzen und lauft Aufgabenstellung nicht padden wollen.
+
+    # Percentile Threshholds
+    th_max = np.percentile(response, 99.9)
+    th_min = np.percentile(response, 0.1)
 
     unique_local_extrema = []
     for i in range(pad, n_rows - 4):
@@ -152,14 +156,29 @@ def blob_detector(response):
             local_maxs = np.argwhere(window >= np.amax(window[:, 4, 4]))
 
             # Falls nicht, dann handelt es sich bei den Achsenminima, um ein unique extrema.
-            if len(local_mins) == 1:
+            if len(local_mins) == 1 and window[local_mins].all() <= th_min:
                 unique_local_extrema.append((min_val, i, j))
 
-            if len(local_maxs) == 1:
+            if len(local_maxs) == 1 and window[local_maxs].all() >= th_max:
                 unique_local_extrema.append((max_val, i, j))
 
     print("LEEEEEEEEROOOOOOYYYY JEEEEENKIIINNSSS")
-    print(unique_local_extrema)
+
+    print(th_min)
+    print("adssdasddasdasdasd")
+    print(th_max)
+
+
+
+
+    # Test: Sort after column
+    #unique_local_extrema = np.asarray(unique_local_extrema)
+    #unique_local_extrema = unique_local_extrema[unique_local_extrema[:,2].argsort()]
+
+    unique_local_extrema = np.percentile(unique_local_extrema, 10, axis=1)
+
+    #print(unique_local_extrema)
+    # TODO Filter results after percentile
 
     return []
 
