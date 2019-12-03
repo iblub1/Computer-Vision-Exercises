@@ -115,7 +115,20 @@ def difference_of_gaussian(image, sigmas):
         response: 3 dimensional numpy array. The first (index 0) dimension is for scale
                   corresponding to sigmas
     '''
-    return np.empty((len(sigmas), *image.shape))
+
+    img = image.copy()
+
+    image_list = []
+    for sigma in sigmas:
+        DoG_img = convolve2d(img, DoG(sigma=sigma), mode="same")
+        image_list.append(DoG_img)
+
+    images = np.asarray(image_list)
+    assert images.shape == (len(sigmas), *image.shape)
+
+    return images
+    
+
 
 def LoG_kernel(fsize=9, sigma=1):
     '''
@@ -131,7 +144,7 @@ def LoG_kernel(fsize=9, sigma=1):
     # TODO: Für die Aufgabe sollen wir auch die analytische Ableitung ausrechnen. Ka wo wir die Anhängen sollen.
 
     _x = _y = (fsize - 1) / 2
-    x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]  # Kopiert von oben. In diesem Fall geht x von -4 bis 4
+    x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]     # Kopiert von oben. In diesem Fall geht x von -4 bis 4
 
     # Errechnete Formel. Zusätzliche Erklärung hier: http://fourier.eng.hmc.edu/e161/lectures/gradient/node8.html
     LoG = (x**2 + y**2 - 2*sigma**2) / sigma**4 * np.exp(-(x**2 + y**2) / 2*sigma**2)
@@ -204,7 +217,16 @@ def DoG(sigma):
     Returns:
         DoG kernel
     '''
-    return np.random.random((9, 9))
+    s_1 = np.sqrt(2) * sigma
+    s_2 = sigma / np.sqrt(2)
+
+    gk_1 = gaussian_kernel(fsize=9, sigma=s_1)
+    gk_2 = gaussian_kernel(fsize=9, sigma=s_2)
+
+    DoG = gk_1 - gk_2
+    assert DoG.shape == (9, 9)
+
+    return DoG
 
 
 def laplacian_kernel():
