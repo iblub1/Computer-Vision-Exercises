@@ -25,6 +25,7 @@ def gaussian_kernel(fsize=7, sigma=1):
     G = np.exp(-0.5 * (x**2 + y**2) / sigma**2)
     return G / np.sum(G)  # Needed to fix this, since we need normalizing for discrete function!
 
+
 def load_image(path):
     ''' 
     The input image is a) loaded, b) converted to greyscale, and
@@ -48,6 +49,7 @@ def load_image(path):
     #plt.show()
 
     return img
+
 
 def smoothed_laplacian(image, sigmas, lap_kernel):
     ''' 
@@ -77,6 +79,7 @@ def smoothed_laplacian(image, sigmas, lap_kernel):
 
     return images
 
+
 def laplacian_of_gaussian(image, sigmas):
     ''' 
     Then laplacian of gaussian operator for every sigma in the list of sigmas is applied to the image.
@@ -88,7 +91,18 @@ def laplacian_of_gaussian(image, sigmas):
         response: 3 dimensional numpy array. The first (index 0) dimension is for scale
                   corresponding to sigmas
     '''
-    return np.empty((len(sigmas), *image.shape))
+    img = image.copy()
+
+    image_list = []
+    for sigma in sigmas:
+        LoG_img = convolve2d(img, LoG_kernel(sigma=sigma), mode="same")
+        image_list.append(LoG_img)
+
+    images = np.asarray(image_list)
+    assert images.shape == (len(sigmas), *image.shape)
+
+    return images
+
 
 def difference_of_gaussian(image, sigmas):
     ''' 
@@ -121,9 +135,11 @@ def LoG_kernel(fsize=9, sigma=1):
 
     # Errechnete Formel. Zusätzliche Erklärung hier: http://fourier.eng.hmc.edu/e161/lectures/gradient/node8.html
     LoG = (x**2 + y**2 - 2*sigma**2) / sigma**4 * np.exp(-(x**2 + y**2) / 2*sigma**2)
-    assert LoG.shape = (fsize, fsize)
+
+    assert LoG.shape == (fsize, fsize)
 
     return LoG
+
 
 def blob_detector(response):
     '''
@@ -176,6 +192,7 @@ def blob_detector(response):
 
     return []
 
+
 def DoG(sigma):
     '''
     Define a DoG kernel. Please, use 9x9 kernels.
@@ -188,6 +205,7 @@ def DoG(sigma):
         DoG kernel
     '''
     return np.random.random((9, 9))
+
 
 def laplacian_kernel():
     '''

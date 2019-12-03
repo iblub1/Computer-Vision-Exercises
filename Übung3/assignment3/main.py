@@ -16,9 +16,10 @@ def problem1():
     image = p1.load_image("data/goat.jpeg")
     lap_kernel = p1.laplacian_kernel()
 
-    method1_output = p1.blob_detector(p1.smoothed_laplacian(image, sigmas, lap_kernel))
-    # TODO Uncomment later
-    #method2_output = p1.blob_detector(p1.laplacian_of_gaussian(image, sigmas))
+    # TODO: Uncomment all 3 later
+
+    #method1_output = p1.blob_detector(p1.smoothed_laplacian(image, sigmas, lap_kernel))
+    method2_output = p1.blob_detector(p1.laplacian_of_gaussian(image, sigmas))
     #method3_output = p1.blob_detector(p1.difference_of_gaussian(image, sigmas))
 
 
