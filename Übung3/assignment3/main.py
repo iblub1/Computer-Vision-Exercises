@@ -20,7 +20,7 @@ def problem1():
     method1_output = p1.blob_detector(p1.smoothed_laplacian(image, sigmas, lap_kernel))
     method2_output = p1.blob_detector(p1.laplacian_of_gaussian(image, sigmas))
     method3_output = p1.blob_detector(p1.difference_of_gaussian(image, sigmas))
-    print("Finished Problem 1. All three numbers of extrema should be similar")
+    print("Finished Problem 1. All three numbers of extrema should be kinda similar")
 
 
 #

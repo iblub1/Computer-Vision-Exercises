@@ -203,7 +203,7 @@ def blob_detector(response):
     print("We have: ", len(unique_local_extrema), "unique local extrema in the 0.1 percentile")
 
 
-    return []
+    return unique_local_extrema
 
 
 def DoG(sigma):
