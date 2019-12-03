@@ -114,7 +114,16 @@ def LoG_kernel(fsize=9, sigma=1):
     Returns:
         LoG kernel
     '''
-    return np.random.random((fsize, fsize))
+    # TODO: Für die Aufgabe sollen wir auch die analytische Ableitung ausrechnen. Ka wo wir die Anhängen sollen.
+
+    _x = _y = (fsize - 1) / 2
+    x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]  # Kopiert von oben. In diesem Fall geht x von -4 bis 4
+
+    # Errechnete Formel. Zusätzliche Erklärung hier: http://fourier.eng.hmc.edu/e161/lectures/gradient/node8.html
+    LoG = (x**2 + y**2 - 2*sigma**2) / sigma**4 * np.exp(-(x**2 + y**2) / 2*sigma**2)
+    assert LoG.shape = (fsize, fsize)
+
+    return LoG
 
 def blob_detector(response):
     '''
@@ -162,23 +171,8 @@ def blob_detector(response):
             if len(local_maxs) == 1 and window[local_maxs].all() >= th_max:
                 unique_local_extrema.append((max_val, i, j))
 
-    print("LEEEEEEEEROOOOOOYYYY JEEEEENKIIINNSSS")
+    print("We have: ", len(unique_local_extrema), "unique local extrema in the 0.1 percentile")
 
-    print(th_min)
-    print("adssdasddasdasdasd")
-    print(th_max)
-
-
-
-
-    # Test: Sort after column
-    #unique_local_extrema = np.asarray(unique_local_extrema)
-    #unique_local_extrema = unique_local_extrema[unique_local_extrema[:,2].argsort()]
-
-    unique_local_extrema = np.percentile(unique_local_extrema, 10, axis=1)
-
-    #print(unique_local_extrema)
-    # TODO Filter results after percentile
 
     return []
 

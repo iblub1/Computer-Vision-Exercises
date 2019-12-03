@@ -21,6 +21,7 @@ def problem1():
     #method2_output = p1.blob_detector(p1.laplacian_of_gaussian(image, sigmas))
     #method3_output = p1.blob_detector(p1.difference_of_gaussian(image, sigmas))
 
+
 #
 # Problem 2
 #
