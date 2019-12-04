@@ -19,9 +19,14 @@ def load_pts_features(path):
     #
     # Your code here
     #
+    data = np.load(path, allow_pickle=True)
+    pts_pic_1 = data["pts"][0]
+    pts_pic_2 = data["pts"][1]
+    feats_pic_1 = data["feats"][0]
+    feats_pic_2 = data["feats"][1]
 
-    pts = [np.empty((123, 2)), np.empty((123, 2))]
-    feats = [np.empty((123, 128)), np.empty((123, 128))]
+    pts = [pts_pic_1, pts_pic_2]
+    feats = [feats_pic_1, feats_pic_2]
 
     return pts, feats
 
