@@ -152,9 +152,9 @@ def LoG_kernel(fsize=9, sigma=1):
     assert LoG.shape == (fsize, fsize)
 
     # Debugging The LoG Kernel:
-    plt.imshow(LoG);
-    plt.colorbar()
-    plt.show()
+    #plt.imshow(LoG);
+    #plt.colorbar()
+    #plt.show()
 
     return LoG
 
