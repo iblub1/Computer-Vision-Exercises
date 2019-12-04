@@ -186,8 +186,11 @@ def ransac_iters(w=0.5, d=min_num_pairs(), z=0.99):
     Returns:
         minimum number of required iterations
     """
+    # Third equation on slide 71
+    k = np.log(1-z) / np.log(1-w**d) 
+    print("Minimum iterations needed for RANSAC: ", k)
 
-    return np.empty(1)
+    return k
 
 
 def ransac(pts1, pts2):
