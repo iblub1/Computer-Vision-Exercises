@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 """This is version 3 of the file"""
 
@@ -31,7 +32,8 @@ def load_pts_features(path):
     return pts, feats
 
 def min_num_pairs():
-    return np.random.randint(1, 32)
+    """Return the minimum number of point correspondences. Nach den Folien sind das immer konstant 4 für das LGS."""
+    return 4
 
 def pickup_samples(pts1, pts2):
     """ Randomly select k corresponding point pairs.
@@ -50,9 +52,15 @@ def pickup_samples(pts1, pts2):
 
     #
     # Your code here
+    # Wie in der Beschreibung angegeben, funktioniert das nur wenn pts1 und 2 aligned sind, sonst stimmten die Indizes nicht.
     #
+    k = min_num_pairs()
+    index_list = random.sample(range(0, len(pts1)), 4)
 
-    return None, None
+    pts1_sub = [pts1[i] for i in index_list]
+    pts2_sub = [pts2[i] for i in index_list]
+
+    return pts1_sub, pts2_sub
 
 
 def compute_homography(pts1, pts2):

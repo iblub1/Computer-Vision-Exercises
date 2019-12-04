@@ -37,6 +37,7 @@ def problem2():
     pts1, pts2 = pts_array
     fts1, fts2 = feats_array
 
+
     # Loading images
     img1 = Image.open('data/img1.png')
     img2 = Image.open('data/img2.png')
@@ -58,6 +59,7 @@ def problem2():
 
     pts1 = pts1[ix1]
     pts2 = pts2[ix2]
+
 
     plt.figure(2)
     plt.subplot(1, 3, 1).set_title('Image 1')
