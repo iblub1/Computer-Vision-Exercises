@@ -77,6 +77,39 @@ def compute_homography(pts1, pts2):
     #
     # Your code here
     #
+    # The Following implementation follows slide 66:
+    # TODO: Untested Code/ Pseudocode following:
+
+    x1 = pts1
+    x2 = pts2
+
+    # 1.) s, t, s', t' berechnen
+    s1 = 1/2 * np.max(np.linalg.norm(x1))
+    t2 = np.mean(x1)
+
+    s2 = 1/2 * np.max(np.linalg.norm(x2))
+    t2 = np.mean(x2)
+    
+    # 2.) T und T' aufstellen
+    # TODO: was ist t_x und t_y in den folien?
+    T1 = np.array([1/s1, 0, -t1_x/s1], [0, 1/s1, -t1_y/s1], [0,0,1])
+    T2 = np.array([1/s2, 0, -t2_x/s2], [0, 1/s2, -t2_y/s2], [0,0,1])
+
+    # 3.) x, x' auf u, u' transformieren
+    u1 = np.dot(T1, x1)
+    u2 = np.dot(T2, x2)
+
+    # 4.) mit SVD(u') H_quer bestimmen
+    u, s, vh = np.linalg.svd(a, full_matrices=False)  # Unterbestimmtes Gleichungssytemen, es gibt keine singulärvektoren die Null sind.
+    print(u.shape)
+    print(s.shape)
+    print(vh.shape)
+
+    h_quer = vh[:,-1]  # h = last right singular vector
+    H_quer = h_quer.reshape((3,3))
+
+    # 5.) H_quer auf H transformieren
+    H = np.linalg.inv(T2) @ H_quer @ T1
 
     return np.empty(3, 3)
 
