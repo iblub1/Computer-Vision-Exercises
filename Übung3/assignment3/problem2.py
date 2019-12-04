@@ -141,7 +141,7 @@ def transform_pts(pts, H):
     pts_y = pts_h[:, 1] / pts_h[:, 2]  # y / z
 
     pts_result = np.concatenate(pts_x, pts_y, axis=1)
-    assert pts_result.shape = pts.shape
+    assert pts_result.shape == pts.shape
 
     return np.empty(100, 2)
 
