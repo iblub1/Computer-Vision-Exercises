@@ -101,11 +101,9 @@ def compute_homography(pts1, pts2):
 
     # 4.) mit SVD(u') H_quer bestimmen
     u, s, vh = np.linalg.svd(a, full_matrices=False)  # Unterbestimmtes Gleichungssytemen, es gibt keine singulärvektoren die Null sind.
-    print(u.shape)
-    print(s.shape)
     print(vh.shape)
 
-    h_quer = vh[:,-1]  # h = last right singular vector
+    h_quer = vh[:,-1]  # h = last right singular vector. Müsste 1x9 rauskommen
     H_quer = h_quer.reshape((3,3))
 
     # 5.) H_quer auf H transformieren
