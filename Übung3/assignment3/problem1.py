@@ -146,15 +146,15 @@ def LoG_kernel(fsize=9, sigma=1):
     _x = _y = (fsize - 1) / 2
     x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]     # Kopiert von oben. In diesem Fall geht x von -4 bis 4
 
-    # Errechnete Formel. Zusätzliche Erklärung hier: http://fourier.eng.hmc.edu/e161/lectures/gradient/node8.html
-    LoG = (x**2 + y**2 - 2*sigma**2) / sigma**4 * np.exp(-(x**2 + y**2) / 2*sigma**2)
+    # Errechnete Formel. Zusätzliche Erklärung hier: https://academic.mu.edu/phys/matthysd/web226/Lab02.htm
+    LoG = - 1 / (np.pi * sigma**4) * (1 - ((x**2 + y**2) / 2*sigma**2)) * np.exp(-(x**2 + y**2) / 2*sigma**2)
 
     assert LoG.shape == (fsize, fsize)
 
     # Debugging The LoG Kernel:
-    #plt.imshow(LoG);
-    #plt.colorbar()
-    #plt.show()
+    plt.imshow(LoG);
+    plt.colorbar()
+    plt.show()
 
     return LoG
 

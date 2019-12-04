@@ -109,7 +109,7 @@ def compute_homography(pts1, pts2):
     # 5.) H_quer auf H transformieren
     H = np.linalg.inv(T2) @ H_quer @ T1
 
-    return np.empty(3, 3)
+    return np.empty(3,  3)
 
 
 def transform_pts(pts, H):
@@ -127,6 +127,22 @@ def transform_pts(pts, H):
     # Your code here
     #
 
+    # TODO: Not tested. Not sure if this is correct
+
+    # Transform pts into homogenous coordinates
+    z_h = np.ones((len(pts), 1))
+    pts_h = np.append(pts, z_h, axis=1)
+
+    # Apply H Matrix
+    pts_h = pts_h @ 3
+
+    # Transform back into cartesian coordinates
+    pts_x = pts_h[:, 0] / pts_h[:, 2]  # x / z
+    pts_y = pts_h[:, 1] / pts_h[:, 2]  # y / z
+
+    pts_result = np.concatenate(pts_x, pts_y, axis=1)
+    assert pts_result.shape = pts.shape
+
     return np.empty(100, 2)
 
 
@@ -142,6 +158,19 @@ def count_inliers(H, pts1, pts2, threshold=5):
     Returns:
         number of inliers
     """
+    # TODO: Code not tested. Work in progress
+
+    inliners_count = 0
+    for i, pt1, pt2 in enumerate(zip(pts1, pts2)):
+        # Transform point set 1 to align with point set 2
+        pt1_transformed = transform_pts(pt1, H)
+
+        # Compute L2-distance
+        distance = np.linalg(pt1 - pt2)
+
+        # If distance < threshold increase count by one
+        if distance < threshold:
+            inliners_count += 1
 
     return np.empty(1)
 
