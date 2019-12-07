@@ -269,6 +269,7 @@ class Method(object):
         '''Provide answer in the return value.
         This function returns a tuple containing indices of the correct answer.
         '''
-
-        return (None, )
+        # Argumentation für 1: LoG macht smoothing und ableitung in einem kernel, statt das wir 2 getrennt brauchen.
+        # Argumentation für 2: Nur eine diskrete Berechnung statt 2, es bleiben mehr Informationen erhalten.
+        return (1, 2)
 
