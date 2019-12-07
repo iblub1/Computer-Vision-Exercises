@@ -142,13 +142,13 @@ def transform_pts(pts, H):
     pts_h = np.append(pts, z_h, axis=1)
 
     # Apply H Matrix
-    pts_h = pts_h @ 3
+    pts_h = pts_h @ H
 
     # Transform back into cartesian coordinates
     pts_x = pts_h[:, 0] / pts_h[:, 2]  # x / z
     pts_y = pts_h[:, 1] / pts_h[:, 2]  # y / z
-
     pts_result = np.concatenate(pts_x, pts_y, axis=1)
+    
     assert pts_result.shape == pts.shape
 
     return np.empty(100, 2)
