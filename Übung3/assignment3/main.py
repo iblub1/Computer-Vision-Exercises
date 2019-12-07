@@ -37,6 +37,9 @@ def problem2():
     pts1, pts2 = pts_array
     fts1, fts2 = feats_array
 
+    # Debugging
+    # p2.compute_homography(pts1, pts2)
+    
 
     # Loading images
     img1 = Image.open('data/img1.png')

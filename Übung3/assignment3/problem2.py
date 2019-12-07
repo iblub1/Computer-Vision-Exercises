@@ -78,38 +78,46 @@ def compute_homography(pts1, pts2):
     # Your code here
     #
     # The Following implementation follows slide 66:
-    # TODO: Untested Code/ Pseudocode following:
+    # TODO: Untested Code following:
 
     x1 = pts1
     x2 = pts2
 
+    # 0.) Transform into homogenous coordinates
+    z_h = np.ones((len(x1), 1))
+    x1 = np.append(x1, z_h, axis=1)
+
+    z_h = np.ones((len(x2), 1))
+    x2 = np.append(x2, z_h, axis=1)
+
     # 1.) s, t, s', t' berechnen
     s1 = 1/2 * np.max(np.linalg.norm(x1))
-    t2 = np.mean(x1)
+    t1_x, t1_y, _ = np.mean(x1, axis=0)
 
     s2 = 1/2 * np.max(np.linalg.norm(x2))
-    t2 = np.mean(x2)
+    t2_x, t2_y, _ = np.mean(x2, axis=0)
     
     # 2.) T und T' aufstellen
-    # TODO: was ist t_x und t_y in den folien?
-    T1 = np.array([1/s1, 0, -t1_x/s1], [0, 1/s1, -t1_y/s1], [0,0,1])
-    T2 = np.array([1/s2, 0, -t2_x/s2], [0, 1/s2, -t2_y/s2], [0,0,1])
+    T1 = np.array([[1/s1, 0, -t1_x/s1], [0, 1/s1, -t1_y/s1], [0,0,1]])
+    T2 = np.array([[1/s2, 0, -t2_x/s2], [0, 1/s2, -t2_y/s2], [0,0,1]])
 
     # 3.) x, x' auf u, u' transformieren
-    u1 = np.dot(T1, x1)
-    u2 = np.dot(T2, x2)
+    u1 = np.dot(x1, T1)
+    u2 = np.dot(x2, T2)
 
     # 4.) mit SVD(u') H_quer bestimmen
-    u, s, vh = np.linalg.svd(a, full_matrices=False)  # Unterbestimmtes Gleichungssytemen, es gibt keine singulärvektoren die Null sind.
-    print(vh.shape)
+    u, s, vh = np.linalg.svd(u2, full_matrices=False)  # Unterbestimmtes Gleichungssytemen, es gibt keine singulärvektoren die Null sind.
 
-    h_quer = vh[:,-1]  # h = last right singular vector. Müsste 1x9 rauskommen
-    H_quer = h_quer.reshape((3,3))
+    #h_quer = vh[:,-1]  # h = last right singular vector. Müsste 1x9 rauskommen (TODO: Überprüfen!)
+    #H_quer = h_quer.reshape((3,3))
+    H_quer = vh
 
     # 5.) H_quer auf H transformieren
     H = np.linalg.inv(T2) @ H_quer @ T1
 
-    return np.empty(3,  3)
+    assert H.shape == (3, 3)
+
+    return H
 
 
 def transform_pts(pts, H):
