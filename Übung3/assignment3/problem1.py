@@ -230,6 +230,7 @@ def DoG(sigma):
     gk_2 = gaussian_kernel(fsize=9, sigma=s_2)
 
     DoG = gk_1 - gk_2
+
     assert DoG.shape == (9, 9)
 
     return DoG

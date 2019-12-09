@@ -142,6 +142,8 @@ def transform_pts(pts, H):
     pts_h = np.append(pts, z_h, axis=1)
 
     # Apply H Matrix
+    print(pts_h.shape)
+    print(H.shape)
     pts_h = pts_h @ H
 
     # Transform back into cartesian coordinates
@@ -174,13 +176,16 @@ def count_inliers(H, pts1, pts2, threshold=5):
         pt1_transformed = transform_pts(pt1, H)
 
         # Compute L2-distance
-        distance = np.linalg(pt1 - pt2)
+        # distance = np.linalg(pt1 - pt2) -> welche Methode?
+        # np.linalg.norm -> standardmaessig L2-Norm 
+        distance = np.linalg.norm(pt1_transformed - pt2)
 
         # If distance < threshold increase count by one
         if distance < threshold:
             inliners_count += 1
 
-    return np.empty(1)
+    # return np.empty(1)
+    return inliners_count
 
 
 def ransac_iters(w=0.5, d=min_num_pairs(), z=0.99):
@@ -216,7 +221,45 @@ def ransac(pts1, pts2):
     # Your code here
     #
 
+    # list of homographies
     best_H = np.empty((3, 3))
+    best_inliers = []   
+
+    # Here the "Cookbook recipe" from l6-matching-single_view-v0" 
+    # on slide 73 is used
+
+
+    # start RANSAC-Iteration
+
+    x, x_ = np.copy(pts1), np.copy(pts2)
+    
+
+    # number of ransac-iterations
+    k = ransac_iters()
+    
+    # allready set in the "pickup_samples" function
+    # N_min = 4 
+
+    for _ in range(0, k):
+        # 1.) pick 4 correspondences (samples)
+        xs, x_s = pickup_samples(x, x_)
+
+        # 2.) build equations, estimate homography
+        H = compute_homography(xs, x_s)
+        
+        # 3./4./5. all happen in count_inliers
+        #---------------------------------------
+        # 3.) transform all points x (from first image to second image)
+        # 4.) measure distance to all points x’ (in non-homogeneous coordinates!)
+        # 5.) count inliers (scale down threshold too!)
+        inliners = count_inliers(H, xs, x_s)
+
+        if len(inliners) > best_inliers:
+            best_inliers = inliners
+            best_H = H
+
+        # 6.) re-estimate final homography
+    
 
     return best_H
 
@@ -241,6 +284,8 @@ def find_matches(feats1, feats2, rT=0.8):
     #
     # Your code here
     #
+    
+    # compute euclidean distance of every feature point
 
     return idx1, idx2
 
