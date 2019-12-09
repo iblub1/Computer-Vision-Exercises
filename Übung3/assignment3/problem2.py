@@ -221,24 +221,26 @@ def ransac(pts1, pts2):
     # Your code here
     #
 
-    # list of homographies
+    # Placeholder for best Homography (to be updated)
     best_H = np.empty((3, 3))
-    best_inliers = []   
+    n_best_inliers = []   
 
     # Here the "Cookbook recipe" from l6-matching-single_view-v0" 
     # on slide 73 is used
-
 
     # start RANSAC-Iteration
 
     x, x_ = np.copy(pts1), np.copy(pts2)
     
 
-    # number of ransac-iterations
+    # number of ransac-iterations (default parameters used)
     k = ransac_iters()
     
-    # allready set in the "pickup_samples" function
-    # N_min = 4 
+    # k has to be ceiled to the next bigger index to be used as number of iteration
+    k = np.ceil(k).astype(np.int64)
+
+    # [ N_min = 4 ] -> already set in the "pickup_samples" function
+    # 
 
     for _ in range(0, k):
         # 1.) pick 4 correspondences (samples)
@@ -254,11 +256,11 @@ def ransac(pts1, pts2):
         # 5.) count inliers (scale down threshold too!)
         inliners = count_inliers(H, xs, x_s)
 
-        if len(inliners) > best_inliers:
-            best_inliers = inliners
+        if len(inliners) > n_best_inliers:
+            n_best_inliers = inliners
             best_H = H
 
-        # 6.) re-estimate final homography
+        # 6.) re-estimate final homography -> next Iteration
     
 
     return best_H
@@ -284,6 +286,12 @@ def find_matches(feats1, feats2, rT=0.8):
     #
     # Your code here
     #
+
+    # Info:
+    # d_SIFT is the minimum distance for a point in the first set to the one in the second,
+    # d'_SIFT is the second minimum distance found for the first point
+    # d* = d_SIFT / d'_SIFT
+    # Coresspondence is Valid if (d* < treshold)
     
     # compute euclidean distance of every feature point
 
