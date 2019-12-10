@@ -237,7 +237,7 @@ def ransac(pts1, pts2):
     k = ransac_iters()
     
     # k has to be ceiled to the next bigger index to be used as number of iteration
-    k = np.ceil(k).astype(np.int64)
+    k = (np.ceil(k)).astype(np.int64)
 
     # [ N_min = 4 ] -> already set in the "pickup_samples" function
     # 
@@ -292,8 +292,55 @@ def find_matches(feats1, feats2, rT=0.8):
     # d'_SIFT is the second minimum distance found for the first point
     # d* = d_SIFT / d'_SIFT
     # Coresspondence is Valid if (d* < treshold)
+
+
+    # inspired by https://github.com/SamL98/PySIFT/blob/master/match.py
     
-    # compute euclidean distance of every feature point
+    # check if N >= M 
+    N, M = feats1.shape[0], feats2.shape[0]
+    # => fuer unterschiedliche Dimensionen noch tauglich mane falls len(feats1) != len(feats2) 
+
+    if N >= M: # if feats1 has more features
+        for i, f1 in enumerate(feats1):
+            # calculate L2-Norm
+            d = np.linalg.norm(feats2 - f1, axis=1)
+
+            # get the indices of the two nearest Points
+            nearest_n = np.argsort(d)[:2]
+            d_SIFT  = d[nearest_n[0]]
+            d_SIFT_ = d[nearest_n[1]]
+
+            print('d_SIFT: ', d_SIFT)
+            print('d_SIFT_: ', d_SIFT_)
+
+            # compute quotient d* (+ preventing division by 0)
+            d_ = d_SIFT / max(d_SIFT_, 1e-8)
+
+            if d_ < rT:
+                # append feature number of feats1
+                idx1.append(i)
+                # append feature number of nearest feature in feats2 
+                # (corresponding feature)
+                idx2.append(nearest_n[0])
+    else: # if feats2 has more features
+        for i, f2 in enumerate(feats2):
+            # calculate L2-Norm
+            d = np.linalg.norm(feats1 - f2, axis=1)
+
+            # get the indices of the two nearest Points
+            nearest_n = np.argsort(d)[:2]
+            d_SIFT_1 = d[nearest_n[0]]
+            d_SIFT_2 = d[nearest_n[1]]
+
+            print('d_SIFT_1: ', d_SIFT_1)
+            print('d_SIFT_2: ', d_SIFT_2)
+
+            # compute quotient d* (+ preventing division by 0)
+            d_ = d_SIFT_1 / max(d_SIFT_2, 1e-8)
+
+            if d_ < rT:
+                idx1.append(nearest_n[0])
+                idx2.append(i)
 
     return idx1, idx2
 
@@ -319,5 +366,11 @@ def final_homography(pts1, pts2, feats1, feats2):
 
     idxs1, idxs2 = [], []
     ransac_return = np.empty((3,3))
+    idxs1, idxs2 = find_matches(feats1, feats2)
+
+    # // TODO
+    # print(idxs1, idxs2, max(idxs1), max(idxs2))
+    # ransac_return = ransac(pts1[idxs1], pts2[idxs2])
+
 
     return ransac_return, idxs1, idxs2
