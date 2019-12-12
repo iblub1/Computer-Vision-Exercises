@@ -39,6 +39,9 @@ def problem2():
 
     # Debugging
     # p2.compute_homography(pts1, pts2)
+    print('Points 1: ', pts1.shape)
+    print('Points 2: ', pts2.shape)
+    print('Feats 1: ', fts1.shape, ' | Feats 2: ', fts2.shape)
     
 
     # Loading images
@@ -55,6 +58,7 @@ def problem2():
     plt.subplot(1, 2, 2)
     plt.imshow(im2)
     plt.plot(pts2[:, 0], pts2[:, 1], 'ro', markersize=1.3)
+
 
     # display algined image
     H, ix1, ix2 = p2.final_homography(pts1, pts2, feats_array[0],
@@ -87,7 +91,7 @@ def problem2():
                                      method=Image.PERSPECTIVE,
                                      data=H_inv.ravel(),
                                      resample=Image.BICUBIC)
-
+    plt.imshow(im3)
     plt.show()
 
 if __name__ == "__main__":
