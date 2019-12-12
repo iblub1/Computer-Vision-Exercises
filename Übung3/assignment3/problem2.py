@@ -98,6 +98,7 @@ def compute_homography(pts1, pts2):
     z_h = np.ones((len(x2), 1))
     x2 = np.append(x2, z_h, axis=1)
     # 0.)-> OK
+    print('x1: ', x1.shape, ' | x2: ', x2.shape)
 
     # 1.) s, t, s', t' berechnen
     s1 = 1/2 * np.max(np.linalg.norm(x1))
@@ -148,9 +149,9 @@ def transform_pts(pts, H):
 
     # Transform pts into homogenous coordinates
     z_h = np.ones((len(pts), 1))
-    print('z_h.shape = ', z_h.shape)
-    print('pts.shape = ', pts.shape)
-    print('H.shape = ', H.shape)
+    # print('z_h.shape = ', z_h.shape)
+    # print('pts.shape = ', pts.shape)
+    # print('H.shape = ', H.shape)
     pts_h = np.append(pts, z_h, axis=1)
 
 
@@ -274,13 +275,13 @@ def ransac(pts1, pts2):
     # number of ransac-iterations (default parameters used)
     k = ransac_iters()
     
-    print('# of Iterations k = ', k)
+    # print('# of Iterations k = ', k)
 
     # [ N_min = 4 ] -> already set in the "pickup_samples" function
     # 
 
     for i in range(k):
-        print('RANSAC Iteration [{}]'.format(i))
+        # print('RANSAC Iteration [{}]'.format(i))
         # 1.) pick 4 correspondences (samples)
         xs, x_s = pickup_samples(x, x_)
 
