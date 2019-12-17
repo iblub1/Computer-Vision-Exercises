@@ -10,14 +10,19 @@ def transform(pts):
     Returns:
         T: [3x3] numpy array, such that Tx normalises 
             2D points x (in homogeneous form).
-    
     """
     assert pts.ndim == 2 and pts.shape[1] == 2
 
     #
     # Your code goes here
     #
-    T = np.empty((3, 3))
+    print(np.linalg.norm(pts, axis=1).shape)
+    s = 1/2 * np.max(np.linalg.norm(pts, axis=1))  # calculate norm for all points and choose maximum
+
+    t_x = np.mean(pts[0])  # mean along x-coordinates
+    t_y = np.mean(pts[1])  # mean along x-coordinates
+
+    T = np.array([[1/s, 0, -t_x / s], [0, 1/s, -t_y / s], [0, 0, 1]])
 
     assert T.shape == (3, 3)
     return T
@@ -40,7 +45,14 @@ def transform_pts(pts, T):
     #
     # Your code goes here
     #
-    pts_h = np.empty((pts.shape[0], 3))
+
+    # Transform into homogenous coordinates
+    z_h = np.ones((len(pts), 1))
+    pts_h = np.append(pts, z_h, axis=1)
+
+    # Multiply homogenous points with transformation matrix T
+    pts_h = np.dot(pts_h, T)
+
     
     assert pts_h.shape == (pts.shape[0], 3)
     return pts_h
