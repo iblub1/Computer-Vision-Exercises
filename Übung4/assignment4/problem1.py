@@ -73,7 +73,34 @@ def create_A(pts1, pts2):
     #
     # Your code goes here
     #
-    return np.empty((pts1.shape[0], 9))
+
+    x_1x_2 = pts1[0] * pts2[0]  # Hier wollen wir glaube ich keine matrix multiplikation sondern die x Koordinate des jweiligen Punktes multiplizieren.
+    y_1x_2 = pts1[1] * pts2[0]
+
+    x_1y_2 = pts1[0] * pts2[1]
+    y_1y_2 = pts1[1] * pts2[1]
+
+    #ones = np.ones(shape=(pts1.shape[0]))  # 2d init
+    ones = np.ones(pts1shape[0])  # 1d init
+
+    # matrix construction on slide 69
+    A = np.array([
+        x_1x_2, 
+        y_1x_2, 
+        pts2[0], 
+        x_1x_2, 
+        y_1y_2,
+        pts2[1],
+        pts1[0],
+        pts1[1],
+        ones
+        ])
+
+    A = A.T # standard consutrcot hängt die 1d arrays zeilenweise an, wir wollen spaltenweise -> transponieren (theoretisch)
+
+    assert A.shape == (pts1.shape[0], 9)
+
+    return A
 
 def enforce_rank2(F):
     """Enforce rank 2 of 3x3 matrix
@@ -89,7 +116,18 @@ def enforce_rank2(F):
     #
     # Your code goes here
     #
-    F_final = np.empty((3, 3))
+    
+    # Use svd to get eigenvalues
+    u, s, vh = np.linalg.svd(F, full_matrices=True)
+
+    # Force the smallest Eigenvalue to be 0 
+    index = np.argmin(s)
+    s[index] = 0
+    s = np.diag(s)  # Numpy returns s as a vector. so we need to make a matrix again
+
+    # Build F_final out of svd results
+    F_final = u @ s @ vh
+    
     
     assert F_final.shape == (3, 3)
     return F_final
