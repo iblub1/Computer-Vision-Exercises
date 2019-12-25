@@ -147,6 +147,28 @@ def compute_F(A):
     #
     # Your code goes here
     #
+
+    # UNTESTED :)
+
+    # Slide 23 to see the process
+
+    # We start with SVD
+    U_A, D_A, V_A = np.linalg.svd(A, full_matrices=True)
+
+    # Construct F_tilde
+    F_tilde = np.array([V_A[0][8], V_A[1][8], V_A[2][8]], 
+                        [V_A[3][8], V_A[4][8], V_A[5][8]],
+                        [V_A[6][8], V_A[7][8], V_A[8][8]
+                        )
+
+    # Use SVD again
+    U_F, D_F, V_F = np.linalg.svd(F_tilde, full_matrices=True)  
+    D_F = np.diag(D_F)  # Convert D_F from vector to diagonal matrix              
+
+    # Enforce Rank 2 
+    F_final = enforce_rank2(D_F)
+
+
     F_final = np.empty((3, 3))
     
     assert F_final.shape == (3, 3)
@@ -166,6 +188,22 @@ def compute_residual(F, x1, x2):
     #
     # Your code goes here
     #
+
+    # This probably needs debugging 
+    sum_g = 0
+    for x_1i, x_2i in x1, x2:
+        print("Shape of x_1i: ", x_1i.shape)
+        print("This should be transposed shape of x_1i: ", (x_1i.T).shape)
+        xFx = x_1i.T @ F @ x_2i
+        
+        abs_xFX = abs(xFx)
+
+        sum_g += abs_xFX 
+
+    g = 1 / x1.shape[0] * sum_g
+
+
+
     return -1.0
 
 def denorm(F, T1, T2):
@@ -203,6 +241,16 @@ def estimate_F(x1, x2, t_func):
     #
     # Your code goes here
     #
+
+    """Pseudo-Code:
+    1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
+    2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
+    3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
+    4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
+    5. use "denorm" with F, T_1 and T_2 to denormalize F 
+    6. Profit ??
+    """
+
     F = np.empty((3, 3))
     res = -1
 
@@ -279,9 +327,14 @@ class MultiChoice(object):
 
     Please, provide the indices of correct options in your answer.
     """
-
+    # 1/2: 7 points in minimum, however we have non linear opt. Which goes away if we use 8 points (1: correct, 2: false)
+    # 3: False, More points improve accuracy, but everything takes way longer because of RANSAC
+    # 4: Correct, the essential matrix however does not
+    # 5: Correct, Essential matrix captures the relation between two views
+    # 6: False (?) Normally only the determinant of an identity matrix should be one (?)
+    # 7: Correct, "The prevailing view (from 8 point algorithm) is extremly susceptible to noise and hence virutally useless for most purposses. . This paper challenges that view, by showing that by preceding the algorithm with a very simplenormalization (translation and scaling) of the coordinates of the matched points, results are obtained comparable with the bestiterative algorithms" (Richard I. Hartley)
     def answer(self):
-        return [-1]
+        return [1, 4, 5, 7]
 
 
 def compute_epipole(F, eps=1e-8):
@@ -299,7 +352,10 @@ def compute_epipole(F, eps=1e-8):
     #
     # Your code goes here
     #
-    e = np.empty((2, ))
+
+    from scipy.linalg import null_space # Are we allowed to use this??? Wir haben auch schonmal Nullspace irgendwo früher berechnet.
+    # Epiploes are the left and right Nullspace of the fundamental matrix (slide 19)
+    e = null_space(F)
 
     return e
 
@@ -317,7 +373,27 @@ def intrinsics_K(f=1.05, h=480, w=640):
     #
     # Your code goes here
     #
-    K = np.empty((3, 3))
+
+    # Source: lecture 2 slide 6 (??)
+    # Nicht sicher ob wir h und w nicht doch aus den Bildern bestimmen sollen statt die defaults zu nehmen
+
+    #ax = f / w  # focal length / image width
+    #ay = f / h  # focal length / image height
+    #center_x = w / 2  # principal point in pixel (x-coordinate)
+    #center_y = h / 2  # principal point in pixel (y-coordinate)
+    #s = 0 # Camera skew
+
+    ax = f
+    ay = f
+    center_x = w
+    center_y = h 
+    s = 0
+
+    K = np.array(
+                [ax, s, center_x],
+                [0, ay, center_y], 
+                [0, 0, 1]
+                )
 
     return K
 
@@ -336,6 +412,14 @@ def compute_E(F):
     #
     # Your code goes here
     #
-    E = np.empty((3, 3))
 
+    # Source: Slide 17: K_1^-T @ E @ K_2^-1 = F
+    # I assume that K_1 = K_2 = K (?)
+    # Meaning we have: K^-T @ E @ K-1 = F
+    # E = K^T @ F @ K
+    K = intrinsics_K()
+    
+    E = K.T @ F @ K
+
+    assert E.shape == (3,3)
     return E
