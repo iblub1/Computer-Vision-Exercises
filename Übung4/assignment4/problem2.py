@@ -14,7 +14,7 @@ def cost_ssd(patch1, patch2):
     #
     # Your code goes here
     #
-    cost_ssd = -1
+    cost_ssd = np.sum(( patch1[:,:,0] - patch2[:,:,0]) **2)
 
     assert np.isscalar(cost_ssd)
     return cost_ssd
@@ -34,7 +34,13 @@ def cost_nc(patch1, patch2):
     #
     # Your code goes here
     #
-    cost_nc = -1
+
+    # According to source it also works to normalize the input first and then correlate if values are between [-1, 1] https://stackoverflow.com/questions/53436231/normalized-cross-correlation-in-python
+    # Die Frage ist, ob diese Art von Normalisierung auch die richtige ist
+
+    patch1 = (patch1 - np.mean(patch1)) / (np.std(patch1) * len(patch1))
+    patch2 = (patch2 - np.mean(patch2)) / (np.std(patch2))
+    cost_nc = np.correlate(patch1, patch2, 'full')
 
     assert np.isscalar(cost_nc)
     return cost_nc
@@ -56,7 +62,9 @@ def cost_function(patch1, patch2, alpha):
     #
     # Your code goes here
     #
-    cost_val = -1
+    m = patch1.shape[0]
+
+    cost_val = 1 / m**2 * cost_ssd(patch1, patch2)  + alpha * cost_nc(patch1, patch2)
     
     assert np.isscalar(cost_val)
     return cost_val
