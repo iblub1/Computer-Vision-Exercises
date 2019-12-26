@@ -20,7 +20,7 @@ def transform(pts):
     s = 1/2 * np.max(np.linalg.norm(pts, axis=1))  # calculate norm for all points and choose maximum
 
     t_x = np.mean(pts[0])  # mean along x-coordinates
-    t_y = np.mean(pts[1])  # mean along x-coordinates
+    t_y = np.mean(pts[1])  # mean along y-coordinates
 
     T = np.array([[1/s, 0, -t_x / s], [0, 1/s, -t_y / s], [0, 0, 1]])
 
@@ -81,20 +81,23 @@ def create_A(pts1, pts2):
     y_1y_2 = pts1[1] * pts2[1]
 
     #ones = np.ones(shape=(pts1.shape[0]))  # 2d init
-    ones = np.ones(pts1shape[0])  # 1d init
+    ones = np.ones(pts1.shape[0])  # 1d init
 
     # matrix construction on slide 69
     A = np.array([
-        x_1x_2, 
-        y_1x_2, 
-        pts2[0], 
-        x_1x_2, 
-        y_1y_2,
-        pts2[1],
-        pts1[0],
-        pts1[1],
-        ones
+        x_1x_2,     # xx' 
+        y_1x_2,     # yx' 
+        pts2[0],    #  x'
+        x_1x_2,     # xy'
+        y_1y_2,     # yy'
+        pts2[1],    #  y'
+        pts1[0],    #  x
+        pts1[1],    #  y
+        ones        #  1
         ])
+    
+    print('A.shape = ', A.shape)
+    A = A.reshape()
 
     A = A.T # standard consutrcot hängt die 1d arrays zeilenweise an, wir wollen spaltenweise -> transponieren (theoretisch)
 
@@ -159,7 +162,7 @@ def compute_F(A):
     F_tilde = np.array([V_A[0][8], V_A[1][8], V_A[2][8]], 
                         [V_A[3][8], V_A[4][8], V_A[5][8]],
                         [V_A[6][8], V_A[7][8], V_A[8][8]]
-                        )
+                      )
 
     # Use SVD again
     U_F, D_F, V_F = np.linalg.svd(F_tilde, full_matrices=True)  
@@ -168,9 +171,11 @@ def compute_F(A):
     # Enforce Rank 2 
     F_final = enforce_rank2(D_F)
 
+
+    F_final = np.empty((3, 3))
+    
     assert F_final.shape == (3, 3)
     return F_final
-
 
 def compute_residual(F, x1, x2):
     """Computes the residual g as defined in the assignment sheet.
@@ -198,11 +203,12 @@ def compute_residual(F, x1, x2):
 
         sum_g += abs_xFX 
 
-    g = 1 / x1.shape[0] * sum_g
+    g = (1 / x1.shape[0]) * sum_g
 
 
 
-    return -1.0
+    # return -1.0
+    return g
 
 def denorm(F, T1, T2):
     """Denormalising matrix F using 
@@ -217,7 +223,12 @@ def denorm(F, T1, T2):
     #
     # Your code goes here
     #
-    return F.copy()
+
+    # calculation as seen in v7, page 71
+    F_unc = T1.T @ F @ T2
+    
+    # return F.copy()
+    return F_unc
 
 def estimate_F(x1, x2, t_func):
     """Estimating fundamental matrix from pixel point
@@ -387,11 +398,11 @@ def intrinsics_K(f=1.05, h=480, w=640):
     center_y = h 
     s = 0
 
-    K = np.array([
+    K = np.array(
                 [ax, s, center_x],
                 [0, ay, center_y], 
                 [0, 0, 1]
-    ])
+                )
 
     return K
 
