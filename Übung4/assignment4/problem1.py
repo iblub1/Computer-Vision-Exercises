@@ -398,11 +398,11 @@ def intrinsics_K(f=1.05, h=480, w=640):
     center_y = h 
     s = 0
 
-    K = np.array(
+    K = np.array([
                 [ax, s, center_x],
                 [0, ay, center_y], 
                 [0, 0, 1]
-                )
+                ])
 
     return K
 
