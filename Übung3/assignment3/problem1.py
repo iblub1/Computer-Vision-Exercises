@@ -95,7 +95,7 @@ def laplacian_of_gaussian(image, sigmas):
 
     image_list = []
     for sigma in sigmas:
-        LoG_img = convolve2d(img, LoG_kernel(sigma=sigma), mode="same")
+        LoG_img = convolve2d(img, LoG_kernel(sigma=sigma), mode="same", boundary="symm")
         image_list.append(LoG_img)
 
     images = np.asarray(image_list)
@@ -120,7 +120,7 @@ def difference_of_gaussian(image, sigmas):
 
     image_list = []
     for sigma in sigmas:
-        DoG_img = convolve2d(img, DoG(sigma=sigma), mode="same")
+        DoG_img = convolve2d(img, DoG(sigma=sigma), mode="same", boundary='symm')
         image_list.append(DoG_img)
 
     images = np.asarray(image_list)
@@ -141,21 +141,17 @@ def LoG_kernel(fsize=9, sigma=1):
     Returns:
         LoG kernel
     '''
-    # TODO: Für die Aufgabe sollen wir auch die analytische Ableitung ausrechnen. Ka wo wir die Anhängen sollen.
 
     _x = _y = (fsize - 1) / 2
     x, y = np.mgrid[-_x:_x + 1, -_y:_y + 1]     # Kopiert von oben. In diesem Fall geht x von -4 bis 4
+    
 
-    # Errechnete Formel. Zusätzliche Erklärung hier: https://academic.mu.edu/phys/matthysd/web226/Lab02.htm
-    # Hier steht auch noch was. Die meinen wieder die andere formel: https://de.m.wikipedia.org/wiki/Marr-Hildreth-Operator
-    LoG = -1 / (np.pi * sigma**4) * (1 - ((x**2 + y**2) / (2*sigma**2))) * np.exp(-(x**2 + y**2) / (2*sigma**2))
-
+    part1 = -(1/np.pi*sigma**4)
+    exp = np.exp(-(x**2 + y**2) / 2 * sigma**2)
+    part2 = (1 - ((x**2 + y**2) / 2 * sigma**2))
+    LoG = part1 * exp * part2
+    
     assert LoG.shape == (fsize, fsize)
-
-    # Debugging The LoG Kernel:
-    #plt.imshow(LoG);
-    #plt.colorbar()
-    #plt.show()
 
     return LoG
 

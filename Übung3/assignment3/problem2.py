@@ -29,8 +29,8 @@ def load_pts_features(path):
     pts = [pts_pic_1, pts_pic_2]
     feats = [feats_pic_1, feats_pic_2]
 
-    print('Loading Points and Features')
-    print('Points: ', len(pts), ' | Features: ', len(pts))
+    # print('Loading Points and Features')
+    # print('Points: ', len(pts), ' | Features: ', len(pts))
     return pts, feats
 
 def min_num_pairs():
@@ -59,14 +59,36 @@ def pickup_samples(pts1, pts2):
     k = min_num_pairs()
     index_list = random.sample(range(0, len(pts1)), 4)
 
-    # pts1_sub = [pts1[i] for i in index_list]
-    # pts2_sub = [pts2[i] for i in index_list]
     pts1_sub = pts1[index_list]
     pts2_sub = pts2[index_list]
-    # print('pts1_sub: ', pts1_sub.shape)
-    # print('pts2_sub: ', pts2_sub.shape)
+
 
     return pts1_sub, pts2_sub
+
+
+def conditioning(pts):
+    ''' Condition the points for numerical stability and return T and U
+    '''
+    # L2-Norm
+    # s = (1/2) * np.max(np.linalg.norm(pts))
+    # L1-Norm
+    s = (1/2) * np.max(abs(pts))
+
+    # mean of x and y components (first two values of mean)
+    t = np.mean(pts, axis=0)
+    t_x, t_y, _ = t
+
+
+    # construct T
+    T = np.eye(3)
+    T[0, 2] = -t_x
+    T[1, 2] = -t_y
+    T[:2, :] /= s
+
+    # u 
+    u = np.dot(pts, T)
+
+    return T, u
 
 
 def compute_homography(pts1, pts2):
@@ -83,48 +105,39 @@ def compute_homography(pts1, pts2):
     #
     # Your code here
     #
-    # The Following implementation follows slide 66:
-    # TODO: Untested Code following:
-
-    x1 = pts1
-    x2 = pts2
-    print('Compute Homography')
-    print('x1: ', x1.shape, ' | x2: ', x2.shape)
+    # print('Compute Homography')
 
     # 0.) Transform into homogenous coordinates
-    z_h = np.ones((len(x1), 1))
-    x1 = np.append(x1, z_h, axis=1)
-    
-    z_h = np.ones((len(x2), 1))
-    x2 = np.append(x2, z_h, axis=1)
-    # 0.)-> OK
-    print('x1: ', x1.shape, ' | x2: ', x2.shape)
+    z_h = np.ones((len(pts1), 1))
+    pts1 = np.append(pts1, z_h, axis=1)
 
-    # 1.) s, t, s', t' berechnen
-    s1 = 1/2 * np.max(np.linalg.norm(x1))
-    t1_x, t1_y, _ = np.mean(x1, axis=0)
+    z_h = np.ones((len(pts2), 1))
+    pts2 = np.append(pts2, z_h, axis=1)
 
-    s2 = 1/2 * np.max(np.linalg.norm(x2))
-    t2_x, t2_y, _ = np.mean(x2, axis=0)
-    
-    # 2.) T und T' aufstellen
-    T1 = np.array([[1/s1, 0, -t1_x/s1], [0, 1/s1, -t1_y/s1], [0,0,1]])
-    T2 = np.array([[1/s2, 0, -t2_x/s2], [0, 1/s2, -t2_y/s2], [0,0,1]])
 
-    # 3.) x, x' auf u, u' transformieren
-    u1 = np.dot(x1, T1)
-    u2 = np.dot(x2, T2)
+    # conditioning of Points
+    T1, u1 = conditioning(pts1)
+    T2, u2 = conditioning(pts2)
 
-    # 4.) mit SVD(u') H_quer bestimmen
-    u, s, vh = np.linalg.svd(u2, full_matrices=False)  # Unterbestimmtes Gleichungssytemen, es gibt keine singulärvektoren die Null sind.
 
-    #h_quer = vh[:,-1]  # h = last right singular vector. Müsste 1x9 rauskommen (TODO: Überprüfen!)
-    #H_quer = h_quer.reshape((3,3))
-    H_quer = vh
+    A = []
+
+    for i in range(0, len(u1)):
+        x1, y1 = u1[i, 0], u1[i, 1]
+        x2, y2 = u2[i, 0], u2[i, 1]
+
+        A.append([0, 0, 0, x1, y1, 1, -x1 * y2, -y1 * y2, -y2])
+        A.append([-x1, -y1, -1, 0, 0, 0, x1 * x2, y1 * x2, x2])
+    A = np.asarray(A)
+
+    _, _, V = np.linalg.svd(A)
+    L = V[-1, :] / V[-1, -1]
+    H_ = L.reshape((3,3))
+    # print('H_ = ', H_.shape, '\n', H_)
 
     # 5.) H_quer auf H transformieren
-    H = np.linalg.inv(T2) @ H_quer @ T1
-
+    H = np.linalg.inv(T2) @ H_ @ T1
+    
     assert H.shape == (3, 3)
 
     return H
@@ -164,7 +177,7 @@ def transform_pts(pts, H):
     pts_x = pts_h[:, 0] / pts_h[:, 2]  # x / z
     pts_y = pts_h[:, 1] / pts_h[:, 2]  # y / z
     pts_result = np.array([pts_x, pts_y]).T
-    print('pts_result = ', pts_result.shape)
+    # print('pts_result = ', pts_result.shape)
 
     assert pts_result.shape == pts.shape
 
@@ -184,44 +197,23 @@ def count_inliers(H, pts1, pts2, threshold=5):
     Returns:
         number of inliers
     """
-    # TODO: Code not tested. Work in progress
-
-    '''
-    inliners_count = 0
-    # for i, pt1, pt2 in enumerate(zip(pts1, pts2)):
-
-    for pt1, pt2 in zip(pts1, pts2):
-        # Transform point set 1 to align with point set 2
-        pt1_transformed = transform_pts(pt1, H)
-
-        # Compute L2-distance
-        # distance = np.linalg(pt1 - pt2) -> welche Methode?
-        # np.linalg.norm -> standardmaessig L2-Norm 
-        distance = np.linalg.norm(pt1_transformed - pt2)
-
-        # If distance < threshold increase count by one
-        if distance < threshold:
-            inliners_count += 1
-
-    # return np.empty(1)
-    return inliners_count
-    '''
-
-    ## Big Assumption: Points are already aligned so that we can 
-    ##                 calculate the distance for all at once
+    ## Assumption: Points are already aligned so that we can 
+    ##             calculate the distance for all at once
 
     # transform points from pts1 to be compared to pts2
     pts1_in_2 = transform_pts(pts1, H)
 
-    # Using the L2-Distance Metric to find the inliers wo lie
+    # Using the L2-Distance Metric to find the inliers who lie
     # in the threshold
     d2 = np.linalg.norm(pts1_in_2 - pts2, axis=1)
 
     # number of inlier: where distance is below the thresholf
-    n_inliers = np.sum(d2 < threshold)
-    print('# of Inliers: ', n_inliers)
+    inliners_count = np.sum(d2 < threshold)
+    # print('d2 = ', d2)
+    # print('# of Inliers: ', inliners_count)
 
-    return n_inliers
+    return inliners_count
+
 
 
 
@@ -241,7 +233,7 @@ def ransac_iters(w=0.5, d=min_num_pairs(), z=0.99):
 
     # k has to be ceiled to the next bigger index to be used as number of iteration
     k = int(np.ceil(k))
-    print("Minimum iterations needed for RANSAC: ", k)
+    # print("Minimum iterations needed for RANSAC: ", k)
 
     return k
 
@@ -263,24 +255,22 @@ def ransac(pts1, pts2):
 
     # Placeholder for best Homography (to be updated)
     best_H = np.empty((3, 3))
-    n_best_inliers = -1   
+    n_best_inliers = -1
 
     # Here the "Cookbook recipe" from l6-matching-single_view-v0" 
     # on slide 73 is used
 
-    # start RANSAC-Iteration
     x, x_ = np.copy(pts1), np.copy(pts2)
-    
 
     # number of ransac-iterations (default parameters used)
     k = ransac_iters()
-    
-    # print('# of Iterations k = ', k)
 
     # [ N_min = 4 ] -> already set in the "pickup_samples" function
     # 
 
-    for i in range(k):
+    # start RANSAC-Iteration
+    for _ in range(k):
+
         # print('RANSAC Iteration [{}]'.format(i))
         # 1.) pick 4 correspondences (samples)
         xs, x_s = pickup_samples(x, x_)
@@ -293,12 +283,10 @@ def ransac(pts1, pts2):
         # 3.) transform all points x (from first image to second image)
         # 4.) measure distance to all points x’ (in non-homogeneous coordinates!)
         # 5.) count inliers (scale down threshold too!)
-        # print('H.shape = ', H.shape)
-        # print('xs: ', xs.shape, ' | x_s: ', x_s.shape)
-        inliners = count_inliers(H, xs, x_s)
+        inliers = count_inliers(H, xs, x_s)
 
-        if inliners > n_best_inliers:
-            n_best_inliers = inliners
+        if inliers > n_best_inliers:
+            n_best_inliers = inliers
             best_H = H
 
         # 6.) re-estimate final homography -> next Iteration
@@ -336,7 +324,6 @@ def find_matches(feats1, feats2, rT=0.8):
     
     # check if N >= M 
     N, M = feats1.shape[0], feats2.shape[0]
-    # => fuer unterschiedliche Dimensionen noch tauglich mane falls len(feats1) != len(feats2) 
 
     if N >= M: # if feats1 has more features
         for i, f1 in enumerate(feats1):
@@ -347,9 +334,6 @@ def find_matches(feats1, feats2, rT=0.8):
             nearest_n = np.argsort(d)[:2]
             d_SIFT  = d[nearest_n[0]]
             d_SIFT_ = d[nearest_n[1]]
-
-            # print('d_SIFT: ', d_SIFT)
-            # print('d_SIFT_: ', d_SIFT_)
 
             # compute quotient d* (+ preventing division by 0)
             d_ = d_SIFT / max(d_SIFT_, 1e-8)
@@ -404,15 +388,9 @@ def final_homography(pts1, pts2, feats1, feats2):
     ransac_return = np.empty((3,3))
     idxs1, idxs2 = find_matches(feats1, feats2)
 
-    # // TODO
-    print(idxs1, idxs2, max(idxs1), max(idxs2))
-    print('pts1', pts1.shape)
-
     # aligned Points (as numpy arrays)
     pts1_aligned, pts2_aligned = pts1[idxs1], pts2[idxs2]
-    print('alogned points: ', pts1_aligned.shape, pts2_aligned.shape)
-
+    
     ransac_return = ransac(pts1_aligned, pts2_aligned)
-
 
     return ransac_return, idxs1, idxs2
