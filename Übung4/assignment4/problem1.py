@@ -103,6 +103,8 @@ def create_A(pts1, pts2):
     # reshape from (9,) -> (1,9) row vector
     A = A.reshape(-1, 9) 
 
+    print('pts1.shape[0] = ', pts1.shape[0])
+    print('A.shape = ', A.shape)
     assert A.shape == (pts1.shape[0], 9)
 
     return A
@@ -193,7 +195,8 @@ def compute_residual(F, x1, x2):
     # Your code goes here
     #
 
-    # This probably needs debugging 
+    # This probably needs debugging
+    # TODO
     sum_g = 0
     for x_1i, x_2i in x1, x2:
         print("Shape of x_1i: ", x_1i.shape)
@@ -258,13 +261,35 @@ def estimate_F(x1, x2, t_func):
     3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
     4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
     5. use "denorm" with F, T_1 and T_2 to denormalize F 
-    6. Profit ??
+    6. Computation of residuals to check the satisfiability of the result 
+    7. ??
+    8. Profit
     """
 
     # 1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
-    # TODO
+    T_1 = transform(x1)
+    T_2 = transform(x2)
 
-    F = np.empty((3, 3))
+    # 2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
+    #   returns vector (homogenous)
+    u_1h = transform_pts(x1, T_1) 
+    u_2h = transform_pts(x2, T_2)
+
+    # 3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
+    #   for creating of the A matrix it is irrelevant if 
+    #   the vectors given are 2D or 3D(homogenous), since
+    #   only the first two elements are used
+    A = create_A(u_1h, u_2h)
+
+    # 4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
+    F_ = compute_F(A) # results in the Matrix F-bar
+
+    # 5. use "denorm" with F, T_1 and T_2 to denormalize F 
+    F = denorm(F_, T_1, T_2)
+
+
+
+    # F = np.empty((3, 3))
     res = -1
 
     return F, res
@@ -418,7 +443,7 @@ def compute_E(F):
     Args:
         F: 3x3 fundamental matrix
 
-    Returns:
+    Returns    :
         E: 3x3 essential matrix
     """
 
