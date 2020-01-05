@@ -48,10 +48,12 @@ def transform_pts(pts, T):
 
     # Transform into homogenous coordinates
     z_h = np.ones((len(pts), 1))
-    pts_h = np.append(pts, z_h, axis=1)
+    pts_h = np.append(pts, z_h, axis=1) # append column vector (hom.)
 
     # Multiply homogenous points with transformation matrix T
     pts_h = np.dot(pts_h, T)
+    
+    # print('pts_h.shape = ', pts_h.shape)
 
     
     assert pts_h.shape == (pts.shape[0], 3)
@@ -74,7 +76,9 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
-    x_1x_2 = pts1[0] * pts2[0]  # Hier wollen wir glaube ich keine matrix multiplikation sondern die x Koordinate des jweiligen Punktes multiplizieren.
+    # Hier wollen wir glaube ich keine matrix multiplikation sondern 
+    # die x Koordinate des jweiligen Punktes multiplizieren.
+    x_1x_2 = pts1[0] * pts2[0]  
     y_1x_2 = pts1[1] * pts2[0]
 
     x_1y_2 = pts1[0] * pts2[1]
@@ -85,21 +89,19 @@ def create_A(pts1, pts2):
 
     # matrix construction on slide 69
     A = np.array([
-        x_1x_2,     # xx' 
-        y_1x_2,     # yx' 
-        pts2[0],    #  x'
-        x_1x_2,     # xy'
-        y_1y_2,     # yy'
-        pts2[1],    #  y'
-        pts1[0],    #  x
-        pts1[1],    #  y
-        ones        #  1
+        x_1x_2,     # x * x' 
+        y_1x_2,     # y * x' 
+        pts2[0],    #   x'
+        x_1x_2,     # x * y'
+        y_1y_2,     # y * y'
+        pts2[1],    #   y'
+        pts1[0],    #   x
+        pts1[1],    #   y
+        ones        #   1
         ])
-    
-    print('A.shape = ', A.shape)
-    A = A.reshape()
 
-    A = A.T # standard consutrcot hängt die 1d arrays zeilenweise an, wir wollen spaltenweise -> transponieren (theoretisch)
+    # reshape from (9,) -> (1,9) row vector
+    A = A.reshape(-1, 9) 
 
     assert A.shape == (pts1.shape[0], 9)
 
@@ -170,9 +172,8 @@ def compute_F(A):
 
     # Enforce Rank 2 
     F_final = enforce_rank2(D_F)
-
-
-    F_final = np.empty((3, 3))
+ 
+    # F_final = np.empty((3, 3))
     
     assert F_final.shape == (3, 3)
     return F_final
@@ -259,6 +260,9 @@ def estimate_F(x1, x2, t_func):
     5. use "denorm" with F, T_1 and T_2 to denormalize F 
     6. Profit ??
     """
+
+    # 1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
+    # TODO
 
     F = np.empty((3, 3))
     res = -1
