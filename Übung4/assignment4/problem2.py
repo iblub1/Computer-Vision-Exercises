@@ -89,6 +89,24 @@ def pad_image(input_img, window_size, padding_mode='symmetric'):
     #
     padded_img = input_img.copy()
 
+    '''
+        Algorithm:
+        1. get number of pixels to pad from the formula [ window_size // 2 ]
+        2. pad the image
+    '''
+
+    # padding is (11 // 2) = 5
+    h_pad = w_pad = window_size // 2
+
+    padded_img = np.lib.pad(input_img, ((h_pad, h_pad),
+                                        (w_pad, w_pad)),
+                                mode=padding_mode
+                           )
+    
+    # print('window_size = ', window_size)
+    # print('input_img = ', input_img.shape)
+    # print('padded_img = ', padded_img.shape)
+
     return padded_img
 
 

@@ -76,13 +76,59 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
+    x =  (pts1[:, 0]).reshape(1, -1)
+    y =  (pts2[:, 1]).reshape(1, -1)
+    x_ = (pts2[:, 0]).reshape(1, -1)
+    y_ = (pts2[:, 1]).reshape(1, -1)
+
+
+    xx_ = x * x_
+    yx_ = y * x_
+    # x_ stays the same
+    xy_ = x * y_
+    yy_ = y * y_
+    # y_ stays the same
+    # x stays the same
+    # y stays the same
+    ones = np.ones_like(x)
+
+    # create te A-Matrix -> should have the shape (n, 9)
+    A = np.array([xx_, yx_, x_, xy_, yy_, y_, x, y, ones])
+
+    # since A is a rank-2 Tensor of shape (9, 1, n) 
+    # dimension 2 has to be removed, also transposed for 
+    # correct shape of (pts1.shape == n, 9)
+    A = np.squeeze(A, axis=1).T
+
+    # return np.empty((pts1.shape[0], 9))
+    return A
+    
+
+
+def _create_A(pts1, pts2):
+    """Create matrix A such that our problem will be Ax = 0,
+    where x is a vectorised representation of the 
+    fundamental matrix.
+        
+    Args:
+        pts1 and pts2: Nx2 numpy arrays corresponding to 2D points 
+    
+    Returns:
+        A: numpy array
+    """
+    assert pts1.shape == pts2.shape
+
+    #
+    # Your code goes here
+    #
+
     # Hier wollen wir glaube ich keine matrix multiplikation sondern 
     # die x Koordinate des jweiligen Punktes multiplizieren.
-    x_1x_2 = pts1[0] * pts2[0]  
-    y_1x_2 = pts1[1] * pts2[0]
+    x_1x_2 = (pts1[0] * pts2[0]) #.reshape(-1, 3)
+    y_1x_2 = (pts1[1] * pts2[0]) #.reshape(-1, 3)
+    x_1y_2 = (pts1[0] * pts2[1]) #.reshape(-1, 3)
+    y_1y_2 = (pts1[1] * pts2[1]) #.reshape(-1, 3)
 
-    x_1y_2 = pts1[0] * pts2[1]
-    y_1y_2 = pts1[1] * pts2[1]
 
     #ones = np.ones(shape=(pts1.shape[0]))  # 2d init
     ones = np.ones(pts1.shape[0])  # 1d init
@@ -94,17 +140,13 @@ def create_A(pts1, pts2):
         pts2[0],    #   x'
         x_1x_2,     # x * y'
         y_1y_2,     # y * y'
-        pts2[1],    #   y'
-        pts1[0],    #   x
-        pts1[1],    #   y
+        pts2_1,    #   y'
+        pts1_0,    #   x
+        pts1_1,    #   y
         ones        #   1
         ])
 
-    # reshape from (9,) -> (1,9) row vector
     A = A.reshape(-1, 9) 
-
-    print('pts1.shape[0] = ', pts1.shape[0])
-    print('A.shape = ', A.shape)
     assert A.shape == (pts1.shape[0], 9)
 
     return A
@@ -162,10 +204,11 @@ def compute_F(A):
     # We start with SVD
     U_A, D_A, V_A = np.linalg.svd(A, full_matrices=True)
 
+    print('V_A = ', V_A.shape)
     # Construct F_tilde
-    F_tilde = np.array([V_A[0][8], V_A[1][8], V_A[2][8]], 
+    F_tilde = np.array([[V_A[0][8], V_A[1][8], V_A[2][8]], 
                         [V_A[3][8], V_A[4][8], V_A[5][8]],
-                        [V_A[6][8], V_A[7][8], V_A[8][8]]
+                        [V_A[6][8], V_A[7][8], V_A[8][8]]]
                       )
 
     # Use SVD again
@@ -197,6 +240,25 @@ def compute_residual(F, x1, x2):
 
     # This probably needs debugging
     # TODO
+
+    print('x1 = ', x1.shape)
+    print('x2 = ', x2.shape)
+    print('F  = ', F.shape)
+
+    sum_g = 0
+    for x_1i, x_2i in zip(x1, x2):
+        x_1i = x_1i.reshape(-1, 3)
+        x_2i = x_2i.reshape(3, -1)
+        # print('x_1i.shape = ', x_1i.shape, ' | x_2i.shape = ', x_2i.shape)
+        xFx = x_1i @ F @ x_2i
+
+        abs_xFx = abs(xFx)
+        sum_g += abs_xFx
+
+    # print('N = ', len(x1))
+    g = (1 / len(x1)) * sum_g
+
+    '''
     sum_g = 0
     for x_1i, x_2i in x1, x2:
         print("Shape of x_1i: ", x_1i.shape)
@@ -208,11 +270,12 @@ def compute_residual(F, x1, x2):
         sum_g += abs_xFX 
 
     g = (1 / x1.shape[0]) * sum_g
-
+    '''
 
 
     # return -1.0
-    return g
+    # convert to float, since g has shape (1, 1)
+    return float(g)
 
 def denorm(F, T1, T2):
     """Denormalising matrix F using 
@@ -286,11 +349,11 @@ def estimate_F(x1, x2, t_func):
 
     # 5. use "denorm" with F, T_1 and T_2 to denormalize F 
     F = denorm(F_, T_1, T_2)
-
-
-
     # F = np.empty((3, 3))
-    res = -1
+
+    # 6. Computation of residuals to check the satisfiability of the result
+    res = compute_residual(F, u_1h, u_2h)
+    # res = -1
 
     return F, res
 
@@ -315,7 +378,15 @@ def line_y(xs, F, pts):
     #
     # Your code goes here
     #
+    print('xs = ', xs.shape, ' | F = ', F.shape, ' | pts = ', pts.shape)
+    l = F.dot(pts.T)
+
+    print('l.shape = ', l.shape)
+    print('l = ', l)
+
     ys = np.empty((M, N))
+    # print('(M, N) = ', M, N)
+
 
     assert ys.shape == (M, N)
     return ys
@@ -341,6 +412,13 @@ def transform_v2(pts):
     #
     # Your code goes here
     #
+
+    '''
+        Possible Approach
+        1. Normalize the datapoints to lie between -1 and 1
+           https://stats.stackexchange.com/questions/178626/how-to-normalize-data-between-1-and-1
+        2. Scale the data to have the averag distance sqrt(2) from the center 
+    '''
     T = np.empty((3, 3))
     
     return T
