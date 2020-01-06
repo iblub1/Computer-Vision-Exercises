@@ -48,10 +48,12 @@ def transform_pts(pts, T):
 
     # Transform into homogenous coordinates
     z_h = np.ones((len(pts), 1))
-    pts_h = np.append(pts, z_h, axis=1)
+    pts_h = np.append(pts, z_h, axis=1) # append column vector (hom.)
 
     # Multiply homogenous points with transformation matrix T
     pts_h = np.dot(pts_h, T)
+    
+    # print('pts_h.shape = ', pts_h.shape)
 
     
     assert pts_h.shape == (pts.shape[0], 3)
@@ -74,7 +76,9 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
-    x_1x_2 = pts1[0] * pts2[0]  # Hier wollen wir glaube ich keine matrix multiplikation sondern die x Koordinate des jweiligen Punktes multiplizieren.
+    # Hier wollen wir glaube ich keine matrix multiplikation sondern 
+    # die x Koordinate des jweiligen Punktes multiplizieren.
+    x_1x_2 = pts1[0] * pts2[0]  
     y_1x_2 = pts1[1] * pts2[0]
 
     x_1y_2 = pts1[0] * pts2[1]
@@ -85,22 +89,22 @@ def create_A(pts1, pts2):
 
     # matrix construction on slide 69
     A = np.array([
-        x_1x_2,     # xx' 
-        y_1x_2,     # yx' 
-        pts2[0],    #  x'
-        x_1x_2,     # xy'
-        y_1y_2,     # yy'
-        pts2[1],    #  y'
-        pts1[0],    #  x
-        pts1[1],    #  y
-        ones        #  1
+        x_1x_2,     # x * x' 
+        y_1x_2,     # y * x' 
+        pts2[0],    #   x'
+        x_1x_2,     # x * y'
+        y_1y_2,     # y * y'
+        pts2[1],    #   y'
+        pts1[0],    #   x
+        pts1[1],    #   y
+        ones        #   1
         ])
-    
+
+    # reshape from (9,) -> (1,9) row vector
+    A = A.reshape(-1, 9) 
+
+    print('pts1.shape[0] = ', pts1.shape[0])
     print('A.shape = ', A.shape)
-    A = A.reshape()
-
-    A = A.T # standard consutrcot hängt die 1d arrays zeilenweise an, wir wollen spaltenweise -> transponieren (theoretisch)
-
     assert A.shape == (pts1.shape[0], 9)
 
     return A
@@ -170,9 +174,8 @@ def compute_F(A):
 
     # Enforce Rank 2 
     F_final = enforce_rank2(D_F)
-
-
-    F_final = np.empty((3, 3))
+ 
+    # F_final = np.empty((3, 3))
     
     assert F_final.shape == (3, 3)
     return F_final
@@ -192,7 +195,8 @@ def compute_residual(F, x1, x2):
     # Your code goes here
     #
 
-    # This probably needs debugging 
+    # This probably needs debugging
+    # TODO
     sum_g = 0
     for x_1i, x_2i in x1, x2:
         print("Shape of x_1i: ", x_1i.shape)
@@ -257,10 +261,35 @@ def estimate_F(x1, x2, t_func):
     3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
     4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
     5. use "denorm" with F, T_1 and T_2 to denormalize F 
-    6. Profit ??
+    6. Computation of residuals to check the satisfiability of the result 
+    7. ??
+    8. Profit
     """
 
-    F = np.empty((3, 3))
+    # 1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
+    T_1 = transform(x1)
+    T_2 = transform(x2)
+
+    # 2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
+    #   returns vector (homogenous)
+    u_1h = transform_pts(x1, T_1) 
+    u_2h = transform_pts(x2, T_2)
+
+    # 3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
+    #   for creating of the A matrix it is irrelevant if 
+    #   the vectors given are 2D or 3D(homogenous), since
+    #   only the first two elements are used
+    A = create_A(u_1h, u_2h)
+
+    # 4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
+    F_ = compute_F(A) # results in the Matrix F-bar
+
+    # 5. use "denorm" with F, T_1 and T_2 to denormalize F 
+    F = denorm(F_, T_1, T_2)
+
+
+
+    # F = np.empty((3, 3))
     res = -1
 
     return F, res
@@ -414,7 +443,7 @@ def compute_E(F):
     Args:
         F: 3x3 fundamental matrix
 
-    Returns:
+    Returns    :
         E: 3x3 essential matrix
     """
 
