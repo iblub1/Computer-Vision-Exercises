@@ -25,7 +25,7 @@ def load_pts_features(path):
     return pts, feats
 
 def min_num_pairs():
-    return np.random.randint(1, 32)
+    return 4
 
 def pickup_samples(pts1, pts2):
     """ Randomly select k corresponding point pairs.
@@ -46,7 +46,8 @@ def pickup_samples(pts1, pts2):
     # Your code here
     #
 
-    return None, None
+    x = min(len(pts1), len(pts2))
+    return np.random.choice(range(x), min_num_pairs(), replace=False)
 
 
 def compute_homography(pts1, pts2):
@@ -63,8 +64,29 @@ def compute_homography(pts1, pts2):
     #
     # Your code here
     #
+    p1 = np.c_[pts1, np.ones(len(pts1))]
+    p2 = np.c_[pts2, np.ones(len(pts2))]
+    
+    A = np.zeros((2 * p1.shape[0], 9))
 
-    return np.empty(3, 3)
+    for i in range(0, 2 * p1.shape[0], 2):
+
+        z  = p2[i // 2]
+        z_ = p1[i // 2]
+
+        A[i][:3] = z_
+        A[i + 1][3:6] = z_
+        A[i][6:] = -z_ * z[0]
+        A[i + 1][6:] = -z_ * z[1]
+    
+    _, _, Vh = np.linalg.svd(A.T.dot(A))
+    V = Vh.T
+    H = np.reshape(V[:, -1], (3, 3))
+
+    if np.linalg.norm(H) != 1.:
+        H /= np.linalg.norm(H)
+    
+    return H
 
 
 def transform_pts(pts, H):
@@ -82,7 +104,8 @@ def transform_pts(pts, H):
     # Your code here
     #
 
-    return np.empty(100, 2)
+    pts = np.c_[pts, np.ones(len(pts))].dot(H.T)
+    return np.array([pts[:, 0] / pts[:, 2], pts[: 1] / pts[:, 2]]).T
 
 
 def count_inliers(H, pts1, pts2, threshold=5):
@@ -98,7 +121,9 @@ def count_inliers(H, pts1, pts2, threshold=5):
         number of inliers
     """
 
-    return np.empty(1)
+    pts2_ = transform_pts(pts1, H)
+    dist = np.linalg.norm(pts2 - pts2_, axis=1)
+    return np.sum(dist < threshold)
 
 
 def ransac_iters(w=0.5, d=min_num_pairs(), z=0.99):
@@ -113,7 +138,8 @@ def ransac_iters(w=0.5, d=min_num_pairs(), z=0.99):
         minimum number of required iterations
     """
 
-    return np.empty(1)
+    return int(np.ceil(np.log(1 - z) / np.log(1 - np.power(w,d))))
+    
 
 
 def ransac(pts1, pts2):
@@ -131,7 +157,19 @@ def ransac(pts1, pts2):
     # Your code here
     #
 
-    best_H = np.empty((3, 3))
+    best_H = None
+    max_inliers = -99999999999
+    n_iters = ransac_iters()
+
+    for _ in range(n_iters):
+
+        idx_sel = pickup_samples(pts1, pts2)
+        H = compute_homography(pts1[idx_sel], pts2[idx_sel])
+
+        num_inliers = count_inliers(H, pts1, pts2)
+        if num_inliers > max_inliers:
+            max_inliers = num_inliers
+            best_H = H
 
     return best_H
 
@@ -157,6 +195,15 @@ def find_matches(feats1, feats2, rT=0.8):
     # Your code here
     #
 
+    for i, feat in enumerate(feats1):
+        dist = np.linalg.norm(feats2 - feat, axis=1)
+        dist_sort = np.argsort(dist)
+        dist1, dist2 = dist[dist_sort[0]], dist[dist_sort[1]]
+
+        if dist1 / max(1e-6, dist2) < rT:
+            idx1 += [i]
+            idx2 += [dist_sort[0]]
+
     return idx1, idx2
 
 
@@ -179,7 +226,7 @@ def final_homography(pts1, pts2, feats1, feats2):
     # Your code here
     #
 
-    idxs1, idxs2 = [], []
-    ransac_return = np.empty((3,3))
+    idxs1, idxs2 = find_matches(feats1, feats2)
+    ransac_return = ransac(pts1[idxs1], pts2[idxs2])
 
     return ransac_return, idxs1, idxs2
