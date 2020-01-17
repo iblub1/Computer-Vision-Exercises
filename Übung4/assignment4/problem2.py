@@ -14,7 +14,7 @@ def cost_ssd(patch1, patch2):
     #
     # Your code goes here
     #
-    cost_ssd = np.sum(( patch1[:,:,0] - patch2[:,:,0]) **2)
+    cost_ssd = np.sum((patch1[:,:,0] - patch2[:,:,0])**2)
 
     assert np.isscalar(cost_ssd)
     return cost_ssd

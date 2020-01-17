@@ -258,22 +258,6 @@ def compute_residual(F, x1, x2):
     # print('N = ', len(x1))
     g = (1 / len(x1)) * sum_g
 
-    '''
-    sum_g = 0
-    for x_1i, x_2i in x1, x2:
-        print("Shape of x_1i: ", x_1i.shape)
-        print("This should be transposed shape of x_1i: ", (x_1i.T).shape)
-        xFx = x_1i.T @ F @ x_2i
-        
-        abs_xFX = abs(xFx)
-
-        sum_g += abs_xFX 
-
-    g = (1 / x1.shape[0]) * sum_g
-    '''
-
-
-    # return -1.0
     # convert to float, since g has shape (1, 1)
     return float(g)
 
@@ -353,7 +337,6 @@ def estimate_F(x1, x2, t_func):
 
     # 6. Computation of residuals to check the satisfiability of the result
     res = compute_residual(F, u_1h, u_2h)
-    # res = -1
 
     return F, res
 
@@ -378,15 +361,30 @@ def line_y(xs, F, pts):
     #
     # Your code goes here
     #
+
+    print('----> LINE_Y <----')
     print('xs = ', xs.shape, ' | F = ', F.shape, ' | pts = ', pts.shape)
+    
+    # l1 = F * x2 | l2 = F * x1
     l = F.dot(pts.T)
+    lx, ly, lz = l[0, :], l[1, :], l[2, :]
 
     print('l.shape = ', l.shape)
-    print('l = ', l)
+    print('lx = ', lx.shape, ' | ly = ', ly.shape, ' | lz = ', lz.shape)
 
     ys = np.empty((M, N))
     # print('(M, N) = ', M, N)
+    M = l.shape[1]
 
+    ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
+    print('ys = ', ys.shape)
+
+    '''
+        line = dot(F,x)    
+        # epipolar line parameter and values
+        t = linspace(0,n,100)
+        lt = array([(line[2]+line[0]*tt)/(-line[1]) for tt in t])
+    '''
 
     assert ys.shape == (M, N)
     return ys
