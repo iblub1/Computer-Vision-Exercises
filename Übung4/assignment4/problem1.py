@@ -16,13 +16,12 @@ def transform(pts):
     #
     # Your code goes here
     #
-    print(np.linalg.norm(pts, axis=1).shape)
-    s = 1/2 * np.max(np.linalg.norm(pts, axis=1))  # calculate norm for all points and choose maximum
 
-    t_x = np.mean(pts[0])  # mean along x-coordinates
-    t_y = np.mean(pts[1])  # mean along y-coordinates
-
-    T = np.array([[1/s, 0, -t_x / s], [0, 1/s, -t_y / s], [0, 0, 1]])
+    t_x, t_y = np.mean(pts, axis=0) # mean along x/y-Dimension (2,)
+    s = 0.5 * np.max(np.abs(pts))   # max-norm (1,)
+    # s = 0.5 * np.max(np.linalg.norm(pts, axis=1))
+    print('s = ', s, ' | ', s.shape)
+    T = np.array([[1/s, 0 , -t_x/s], [0, 1/s, -t_y/s], [0, 0, 1]]) # conditional matrix (3, 3)
 
     assert T.shape == (3, 3)
     return T
@@ -46,16 +45,8 @@ def transform_pts(pts, T):
     # Your code goes here
     #
 
-    # Transform into homogenous coordinates
-    z_h = np.ones((len(pts), 1))
-    pts_h = np.append(pts, z_h, axis=1) # append column vector (hom.)
+    pts_h = np.c_[pts, np.ones(len(pts))].dot(T)
 
-    # Multiply homogenous points with transformation matrix T
-    pts_h = np.dot(pts_h, T)
-    
-    # print('pts_h.shape = ', pts_h.shape)
-
-    
     assert pts_h.shape == (pts.shape[0], 3)
     return pts_h
 
@@ -76,29 +67,14 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
-    x =  (pts1[:, 0]).reshape(1, -1)
-    y =  (pts2[:, 1]).reshape(1, -1)
-    x_ = (pts2[:, 0]).reshape(1, -1)
-    y_ = (pts2[:, 1]).reshape(1, -1)
+    print('pts1 = ', pts1.shape)
+    print('pts2 = ', pts2.shape)
+    
+    x, y   = pts1[:, 0], pts1[:, 1]
+    x_, y_ = pts2[:, 0], pts2[:, 1] 
+    ones   = np.ones_like(x)
 
-
-    xx_ = x * x_
-    yx_ = y * x_
-    # x_ stays the same
-    xy_ = x * y_
-    yy_ = y * y_
-    # y_ stays the same
-    # x stays the same
-    # y stays the same
-    ones = np.ones_like(x)
-
-    # create te A-Matrix -> should have the shape (n, 9)
-    A = np.array([xx_, yx_, x_, xy_, yy_, y_, x, y, ones])
-
-    # since A is a rank-2 Tensor of shape (9, 1, n) 
-    # dimension 2 has to be removed, also transposed for 
-    # correct shape of (pts1.shape == n, 9)
-    A = np.squeeze(A, axis=1).T
+    A = np.array([x * x_, y * x_, x_, x * y_, y * y_, y_, x, y, ones]).T
 
     # return np.empty((pts1.shape[0], 9))
     return A
@@ -168,7 +144,10 @@ def enforce_rank2(F):
     
     # Use svd to get eigenvalues
     u, s, vh = np.linalg.svd(F, full_matrices=True)
+    s[2] = 0
+    F_final = np.dot(u, np.dot(np.diag(s), vh)) # Build F_final out of svd results
 
+    '''
     # Force the smallest Eigenvalue to be 0 
     index = np.argmin(s)
     s[index] = 0
@@ -176,8 +155,8 @@ def enforce_rank2(F):
 
     # Build F_final out of svd results
     F_final = u @ s @ vh
-    
-    
+    '''
+
     assert F_final.shape == (3, 3)
     return F_final
 
@@ -197,23 +176,26 @@ def compute_F(A):
     # Your code goes here
     #
 
-    # UNTESTED :)
-
     # Slide 23 to see the process
 
     # We start with SVD
     U_A, D_A, V_A = np.linalg.svd(A, full_matrices=True)
 
     print('V_A = ', V_A.shape)
-    # Construct F_tilde
-    F_tilde = np.array([[V_A[0][8], V_A[1][8], V_A[2][8]], 
-                        [V_A[3][8], V_A[4][8], V_A[5][8]],
-                        [V_A[6][8], V_A[7][8], V_A[8][8]]]
-                      )
+
+    # Construct F_tilde -> rightmost vector  
+    F_tilde = V_A[:, -1].reshape(3, 3)
+    
+
+    # F_tilde = np.array([[V_A[0][8], V_A[1][8], V_A[2][8]], 
+    #                     [V_A[3][8], V_A[4][8], V_A[5][8]],
+    #                     [V_A[6][8], V_A[7][8], V_A[8][8]]]
+    #                   )
+    # print(F_tilde_ == F_tilde)
 
     # Use SVD again
-    U_F, D_F, V_F = np.linalg.svd(F_tilde, full_matrices=True)  
-    D_F = np.diag(D_F)  # Convert D_F from vector to diagonal matrix              
+    U_F, D_F, V_F = np.linalg.svd(F_tilde, full_matrices=True)
+    D_F = np.diag(D_F)             
 
     # Enforce Rank 2 
     F_final = enforce_rank2(D_F)
@@ -254,6 +236,7 @@ def compute_residual(F, x1, x2):
 
         abs_xFx = abs(xFx)
         sum_g += abs_xFx
+    
 
     # print('N = ', len(x1))
     g = (1 / len(x1)) * sum_g
@@ -374,10 +357,10 @@ def line_y(xs, F, pts):
 
     ys = np.empty((M, N))
     # print('(M, N) = ', M, N)
-    M = l.shape[1]
+    # M = l.shape[1]
 
-    ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
-    print('ys = ', ys.shape)
+    # ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
+    # print('ys = ', ys.shape)
 
     '''
         line = dot(F,x)    
@@ -385,6 +368,10 @@ def line_y(xs, F, pts):
         t = linspace(0,n,100)
         lt = array([(line[2]+line[0]*tt)/(-line[1]) for tt in t])
     '''
+
+    ys = np.array([-(lz + lx * xi) / ly for xi in xs]).T
+    print('ys = ', ys.shape)
+
 
     assert ys.shape == (M, N)
     return ys
