@@ -67,65 +67,21 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
-    print('pts1 = ', pts1.shape)
-    print('pts2 = ', pts2.shape)
+    # print('pts1 = ', pts1.shape)
+    # print('pts2 = ', pts2.shape)
     
-    x, y   = pts1[:, 0], pts1[:, 1]
+    x,  y  = pts1[:, 0], pts1[:, 1]
     x_, y_ = pts2[:, 0], pts2[:, 1] 
     ones   = np.ones_like(x)
 
+    # print('x, y = ', x.shape, y.shape)
+
     A = np.array([x * x_, y * x_, x_, x * y_, y * y_, y_, x, y, ones]).T
+    # print('A = ', A.shape)
 
-    # return np.empty((pts1.shape[0], 9))
-    return A
-    
-
-
-def _create_A(pts1, pts2):
-    """Create matrix A such that our problem will be Ax = 0,
-    where x is a vectorised representation of the 
-    fundamental matrix.
-        
-    Args:
-        pts1 and pts2: Nx2 numpy arrays corresponding to 2D points 
-    
-    Returns:
-        A: numpy array
-    """
-    assert pts1.shape == pts2.shape
-
-    #
-    # Your code goes here
-    #
-
-    # Hier wollen wir glaube ich keine matrix multiplikation sondern 
-    # die x Koordinate des jweiligen Punktes multiplizieren.
-    x_1x_2 = (pts1[0] * pts2[0]) #.reshape(-1, 3)
-    y_1x_2 = (pts1[1] * pts2[0]) #.reshape(-1, 3)
-    x_1y_2 = (pts1[0] * pts2[1]) #.reshape(-1, 3)
-    y_1y_2 = (pts1[1] * pts2[1]) #.reshape(-1, 3)
-
-
-    #ones = np.ones(shape=(pts1.shape[0]))  # 2d init
-    ones = np.ones(pts1.shape[0])  # 1d init
-
-    # matrix construction on slide 69
-    A = np.array([
-        x_1x_2,     # x * x' 
-        y_1x_2,     # y * x' 
-        pts2[0],    #   x'
-        x_1x_2,     # x * y'
-        y_1y_2,     # y * y'
-        pts2_1,    #   y'
-        pts1_0,    #   x
-        pts1_1,    #   y
-        ones        #   1
-        ])
-
-    A = A.reshape(-1, 9) 
     assert A.shape == (pts1.shape[0], 9)
-
     return A
+    
 
 def enforce_rank2(F):
     """Enforce rank 2 of 3x3 matrix
@@ -145,17 +101,7 @@ def enforce_rank2(F):
     # Use svd to get eigenvalues
     u, s, vh = np.linalg.svd(F, full_matrices=True)
     s[2] = 0
-    F_final = np.dot(u, np.dot(np.diag(s), vh)) # Build F_final out of svd results
-
-    '''
-    # Force the smallest Eigenvalue to be 0 
-    index = np.argmin(s)
-    s[index] = 0
-    s = np.diag(s)  # Numpy returns s as a vector. so we need to make a matrix again
-
-    # Build F_final out of svd results
-    F_final = u @ s @ vh
-    '''
+    F_final = u @ np.diag(s) @ vh   # Build F_final out of svd results
 
     assert F_final.shape == (3, 3)
     return F_final
@@ -183,7 +129,7 @@ def compute_F(A):
 
     print('V_A = ', V_A.shape)
 
-    # Construct F_tilde -> rightmost vector  
+    # Construct F_tilde -> rightmost column vector of V_A
     F_tilde = V_A[:, -1].reshape(3, 3)
     
 
@@ -191,7 +137,6 @@ def compute_F(A):
     #                     [V_A[3][8], V_A[4][8], V_A[5][8]],
     #                     [V_A[6][8], V_A[7][8], V_A[8][8]]]
     #                   )
-    # print(F_tilde_ == F_tilde)
 
     # Use SVD again
     U_F, D_F, V_F = np.linalg.svd(F_tilde, full_matrices=True)
@@ -223,10 +168,12 @@ def compute_residual(F, x1, x2):
     # This probably needs debugging
     # TODO
 
+    print('Residual')
     print('x1 = ', x1.shape)
     print('x2 = ', x2.shape)
     print('F  = ', F.shape)
 
+    # conputation x1 * F * x2
     sum_g = 0
     for x_1i, x_2i in zip(x1, x2):
         x_1i = x_1i.reshape(-1, 3)
@@ -239,8 +186,8 @@ def compute_residual(F, x1, x2):
     
 
     # print('N = ', len(x1))
-    g = (1 / len(x1)) * sum_g
-
+    g = sum_g / len(x1)
+    
     # convert to float, since g has shape (1, 1)
     return float(g)
 
@@ -259,9 +206,8 @@ def denorm(F, T1, T2):
     #
 
     # calculation as seen in v7, page 71
+    print('T1 = ', T1.shape, ' | T2 = ', T2.shape)
     F_unc = T1.T @ F @ T2
-    
-    # return F.copy()
     return F_unc
 
 def estimate_F(x1, x2, t_func):
@@ -355,15 +301,11 @@ def line_y(xs, F, pts):
     print('l.shape = ', l.shape)
     print('lx = ', lx.shape, ' | ly = ', ly.shape, ' | lz = ', lz.shape)
 
-    ys = np.empty((M, N))
-    # print('(M, N) = ', M, N)
-    # M = l.shape[1]
-
     # ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
     # print('ys = ', ys.shape)
 
     '''
-        line = dot(F,x)    
+        line = dot(F,x)
         # epipolar line parameter and values
         t = linspace(0,n,100)
         lt = array([(line[2]+line[0]*tt)/(-line[1]) for tt in t])
@@ -371,7 +313,6 @@ def line_y(xs, F, pts):
 
     ys = np.array([-(lz + lx * xi) / ly for xi in xs]).T
     print('ys = ', ys.shape)
-
 
     assert ys.shape == (M, N)
     return ys
