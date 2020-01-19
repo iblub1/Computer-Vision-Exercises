@@ -273,10 +273,12 @@ class WindowBasedDisparityMatching(object):
         (Element with index 0 corresponds to Q1, with index 1 to Q2 and so on.)
         
         Q1. [?] is better for estimating disparity values on sharp objects and object boundaries
+        # Answer: sharp objects need small windows, otherwise edges geht washed out
           1: Using a smaller window size (e.g., 3x3)
           2: Using a bigger window size (e.g., 11x11)
         
         Q2. [?] is good for estimating disparity values on locally non-textured area.
+        # non-textued area is hard for flow-estimation, because all pixels are the same Make window larger to capture more.
           1: Using a smaller window size (e.g., 3x3)
           2: Using a bigger window size (e.g., 11x11)
 
@@ -293,4 +295,4 @@ class WindowBasedDisparityMatching(object):
 
         """
 
-        return (-1, -1, -1, -1)
+        return (1, 2, 2, 4)
