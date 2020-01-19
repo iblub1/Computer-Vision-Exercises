@@ -52,7 +52,14 @@ def cost_nc(patch1, patch2):
     print('patch1 = ', patch1.shape, '| patch2 = ', patch2.shape)
     patch1 = (patch1 - np.mean(patch1)) / (np.std(patch1) * len(patch1))
     patch2 = (patch2 - np.mean(patch2)) / (np.std(patch2))
-    cost_nc = np.correlate(patch1, patch2, 'full')
+
+    # np.correlate geht nur mit 1D Vektoren. Außerdem gibt dir das auch einen vektor zurück.
+    # cost_nc = np.correlate(patch1.flatten(), patch2.flatten(), 'full')
+
+    # Ich glaube du meinst den pearson korr koefficient
+    patch1 = patch1.reshape(11, 11)
+    patch2 = patch2.reshape(11, 11)
+    cost_nc = np.corrcoef(patch1, patch2)[1,0]
 
     assert np.isscalar(cost_nc)
     return cost_nc
@@ -246,7 +253,8 @@ def compute_aepe(disparity_gt, disparity_res):
     #
     # Your code goes here
     #
-    aepe = -1
+    N = disparity_gt.shape[0] * disparity_gt.shape[1]
+    aepe = 1/N * np.linalg.norm(disparity_gt - disparity_res, ord=1)
 
     assert np.isscalar(aepe)
     return aepe
