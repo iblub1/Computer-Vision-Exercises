@@ -1,4 +1,5 @@
 import numpy as np
+import utils
 
 def transform(pts):
     """Point conditioning: scale and shift points into [-1, 1] range
@@ -20,7 +21,6 @@ def transform(pts):
     t_x, t_y = np.mean(pts, axis=0) # mean along x/y-Dimension (2,)
     s = 0.5 * np.max(np.abs(pts))   # max-norm (1,)
     # s = 0.5 * np.max(np.linalg.norm(pts, axis=1))
-    print('s = ', s, ' | ', s.shape)
     T = np.array([[1/s, 0 , -t_x/s], [0, 1/s, -t_y/s], [0, 0, 1]]) # conditional matrix (3, 3)
 
     assert T.shape == (3, 3)
@@ -45,10 +45,18 @@ def transform_pts(pts, T):
     # Your code goes here
     #
 
-    pts_h = np.c_[pts, np.ones(len(pts))].dot(T)
+    ## [  Tx = u  ]
+    #  T     *   pts.T   =   pts_h    |  pts_h  *  T.T 
+    # (3,3)     (3, 19)  = (3, 19).T  = (19, 3) * (3,3)
+    pts_h = T @ np.c_[pts, np.ones((len(pts), 1))].T
+    pts_out = pts_h.T
+    # pts_out_ = np.c_[pts, np.ones((len(pts), 1))].dot(T.T)
 
-    assert pts_h.shape == (pts.shape[0], 3)
-    return pts_h
+    # pts_h == pts_h_ => True
+    
+
+    assert pts_out.shape == (pts.shape[0], 3)
+    return pts_out
 
 def create_A(pts1, pts2):
     """Create matrix A such that our problem will be Ax = 0,
@@ -67,17 +75,13 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
-    # print('pts1 = ', pts1.shape)
-    # print('pts2 = ', pts2.shape)
-    
-    x,  y  = pts1[:, 0], pts1[:, 1]
-    x_, y_ = pts2[:, 0], pts2[:, 1] 
-    ones   = np.ones_like(x)
+    x,  y  = pts1[:, 0], pts1[:, 1] # x/y-Vector from pts1 (19,), (19,)
+    x_, y_ = pts2[:, 0], pts2[:, 1] # x/y-Vector from pts2 (19,), (19,)
+    ones   = np.ones_like(x)        # (19,)
 
-    # print('x, y = ', x.shape, y.shape)
-
+    #     [  1      2      3           9  ]
+    # A = [(19,), (19,), (19,), ..., (19,)] -> (9, 19) -> A.T = (19, 9)
     A = np.array([x * x_, y * x_, x_, x * y_, y * y_, y_, x, y, ones]).T
-    # print('A = ', A.shape)
 
     assert A.shape == (pts1.shape[0], 9)
     return A
@@ -97,14 +101,20 @@ def enforce_rank2(F):
     #
     # Your code goes here
     #
-    
-    # Use svd to get eigenvalues
-    u, s, vh = np.linalg.svd(F, full_matrices=True)
-    s[2] = 0
-    F_final = u @ np.diag(s) @ vh   # Build F_final out of svd results
 
-    assert F_final.shape == (3, 3)
-    return F_final
+    # Use svd to get eigenvalues [F = U * D * V.T]
+    # Decomposition (3, 3) = (3, 3) * (3,) * (3, 3).T
+    U_F, D_F, V_FT = np.linalg.svd(F, full_matrices=True)
+
+    # D_33 = 0
+    D_F[2] = 0
+
+    # reassemble F with modified D (F = U * D_ * V.T)
+    # Reassembly: (3, 3) = (3, 3) * (3, 3) * (3, 3).T
+    F_out = U_F @ np.diag(D_F) @ V_FT   # Build F_out out of svd results
+
+    assert F_out.shape == (3, 3) and np.linalg.matrix_rank(F_out) == 2
+    return F_out
 
 def compute_F(A):
     """Computing the fundamental matrix from F
@@ -124,29 +134,28 @@ def compute_F(A):
 
     # Slide 23 to see the process
 
-    # We start with SVD
-    U_A, D_A, V_A = np.linalg.svd(A, full_matrices=True)
+    # We start with SVD (A = U_A * D_A * V_A.T)
+    # U, D -> not needed for further calulcaions since F_tilde
+    # will be determined with a SVD of V
+    _, _, V_AT = np.linalg.svd(A, full_matrices=True) # OK
 
-    print('V_A = ', V_A.shape)
+    # Construct F_tilde -> rightmost column vector of V_A -> V_A[:,8]
+    # But since the third matrix of the SVD is transposed you dont take 
+    # the rightmost Vector V[:, -1], you take the last row of the
+    # transposed version of V -> (V_A.T)[-1]
+    #
+    # (V_A.T)[:,-1] <=> V_A[-1,:]
+    F_tilde = V_AT[-1].reshape((3, 3))
 
-    # Construct F_tilde -> rightmost column vector of V_A
-    F_tilde = V_A[:, -1].reshape(3, 3)
-    
-
+    # Equal to the upper eqpression
     # F_tilde = np.array([[V_A[0][8], V_A[1][8], V_A[2][8]], 
     #                     [V_A[3][8], V_A[4][8], V_A[5][8]],
     #                     [V_A[6][8], V_A[7][8], V_A[8][8]]]
-    #                   )
-
-    # Use SVD again
-    U_F, D_F, V_F = np.linalg.svd(F_tilde, full_matrices=True)
-    D_F = np.diag(D_F)             
+    #                   )            
 
     # Enforce Rank 2 
-    F_final = enforce_rank2(D_F)
- 
-    # F_final = np.empty((3, 3))
-    
+    F_final = enforce_rank2(F_tilde)
+
     assert F_final.shape == (3, 3)
     return F_final
 
@@ -168,28 +177,25 @@ def compute_residual(F, x1, x2):
     # This probably needs debugging
     # TODO
 
-    print('Residual')
-    print('x1 = ', x1.shape)
-    print('x2 = ', x2.shape)
-    print('F  = ', F.shape)
+    assert x1.shape == x2.shape
 
-    # conputation x1 * F * x2
+    print('Residual')
+    # print('x1 = ', x1.shape)
+    # print('x2 = ', x2.shape)
+    # print('F  = ', F.shape)
+
     sum_g = 0
     for x_1i, x_2i in zip(x1, x2):
-        x_1i = x_1i.reshape(-1, 3)
-        x_2i = x_2i.reshape(3, -1)
-        # print('x_1i.shape = ', x_1i.shape, ' | x_2i.shape = ', x_2i.shape)
-        xFx = x_1i @ F @ x_2i
+        x_1i = x_1i.reshape((1, 3)) # (x_1i).T => (1, 3)
+        x_2i = x_2i.reshape((3, 1)) #  x_2i    => (3, 1)
+        xFx = x_1i @ F @ x_2i       # x_1i^T * F * x_2i = e_i
+        sum_g += np.abs(xFx)        
 
-        abs_xFx = abs(xFx)
-        sum_g += abs_xFx
-    
+    g = sum_g / x1.shape[0]
 
-    # print('N = ', len(x1))
-    g = sum_g / len(x1)
-    
     # convert to float, since g has shape (1, 1)
     return float(g)
+
 
 def denorm(F, T1, T2):
     """Denormalising matrix F using 
@@ -207,7 +213,11 @@ def denorm(F, T1, T2):
 
     # calculation as seen in v7, page 71
     print('T1 = ', T1.shape, ' | T2 = ', T2.shape)
-    F_unc = T1.T @ F @ T2
+    
+    ## Unsure which to use!!
+    # F_unc = T1.T @ F @ T2
+    F_unc = T2.T.dot(F).dot(T1)
+
     return F_unc
 
 def estimate_F(x1, x2, t_func):
@@ -248,21 +258,20 @@ def estimate_F(x1, x2, t_func):
 
     # 2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
     #   returns vector (homogenous)
-    u_1h = transform_pts(x1, T_1) 
+    u_1h = transform_pts(x1, T_1)
     u_2h = transform_pts(x2, T_2)
 
     # 3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
     #   for creating of the A matrix it is irrelevant if 
-    #   the vectors given are 2D or 3D(homogenous), since
-    #   only the first two elements are used
+    #   the vectors given are 2D or homogenous (3D), since
+    #   only the first two elements are used to compute A
     A = create_A(u_1h, u_2h)
 
     # 4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
     F_ = compute_F(A) # results in the Matrix F-bar
 
-    # 5. use "denorm" with F, T_1 and T_2 to denormalize F 
+    # 5. use "denorm" with F, T_1 and T_2 to denormalize F-bar to get F
     F = denorm(F_, T_1, T_2)
-    # F = np.empty((3, 3))
 
     # 6. Computation of residuals to check the satisfiability of the result
     res = compute_residual(F, u_1h, u_2h)
@@ -294,6 +303,7 @@ def line_y(xs, F, pts):
     print('----> LINE_Y <----')
     print('xs = ', xs.shape, ' | F = ', F.shape, ' | pts = ', pts.shape)
     
+    # contstruct epipolar line
     # l1 = F * x2 | l2 = F * x1
     l = F.dot(pts.T)
     lx, ly, lz = l[0, :], l[1, :], l[2, :]
