@@ -270,7 +270,7 @@ def optimal_alpha():
     #
     # Fix alpha
     #
-    alpha = np.random.choice([-0.06, -0.01, 0.04, 0.1])
+    alpha = -0.01
     return alpha
 
 
