@@ -15,7 +15,8 @@ def cost_ssd(patch1, patch2):
     #
     # Your code goes here
     #
-    print('SSD | patch1 = ', patch1.shape, ' | patch2 = ', patch2.shape)
+    
+    # print('SSD | patch1 = ', patch1.shape, ' | patch2 = ', patch2.shape)
 
     # input has size (m, m), not (m, m, 1), but we can handle either case
     if patch1.ndim == patch2.ndim:
@@ -48,8 +49,8 @@ def cost_nc(patch1, patch2):
     # According to source it also works to normalize the input first and then correlate if values are between [-1, 1] https://stackoverflow.com/questions/53436231/normalized-cross-correlation-in-python
     # Die Frage ist, ob diese Art von Normalisierung auch die richtige ist
 
-    print('[cost_nc]')
-    print('patch1 = ', patch1.shape, '| patch2 = ', patch2.shape)
+    # print('[cost_nc]')
+    # print('patch1 = ', patch1.shape, '| patch2 = ', patch2.shape)
     patch1 = (patch1 - np.mean(patch1)) / (np.std(patch1) * len(patch1))
     patch2 = (patch2 - np.mean(patch2)) / (np.std(patch2))
 
@@ -162,7 +163,7 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
     print('max_disp = [', max_disp, ']')
     print('window_size = [', window_size, ']')
 
-    ## TODO: Idea
+    ## Code inspired by:
     ## https://github.com/davechristian/Simple-SSD-Stereo/blob/master/stereomatch_SSD.py
 
     height, width = padded_img_l.shape
@@ -177,53 +178,56 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
     # [considering the padding]
     # start at k_size and end at img_size - k_size
     # depending on the window size
-    k_size = int(window_size / 2)
+    half_window = int(window_size / 2)
     
     ## [pixelwise computation of disparity of the image]
     # 
     # Algorithm:
-    # 1. iterate over height, width -> [y, x] -> OK
-    # 2. cut out a window of the given window-size
-    # 3. try different disparities in the given search range,
-    #    and take the best
+    # 1) iterate over height, width [y, x]
+    # 2) iterate over disparities   [d]
+    # 2.1) cut out a two windows W_L, W_R of the given window-size
+    # 2.2) compute the cost function for W_L and W_R
+    # 2.3) save the disparity with the lowest cost-value
     #
-
-    # iterate over rows (height/y)
-    for y in range(k_size, height - k_size):
+    
+     # iterate over rows (height/y)
+    for y in range(half_window, height - half_window):
+        # print(".", end="", flush=True)
+        
         # iterate over columns (width/x)
-        for x in range(k_size, width - k_size):
-            best_d = 0    # initial value for disparity
-            # cost initialized as very high value -> to be updated
+        for x in range(half_window, width - half_window):
+
+            # initial value for disparity
+            best_d = 0    
+
+            # cost initialized as very high value which will be updated if better cost is encountered
             cost_prev = np.inf
+            
+            # iterate over [0, ..., max_disp]
+            for d in range(max_disp + 1):
 
-            # iterate over disparitie in the given interval [0, d_max]. 
-            # The disparity is a positive whole number since we work with 
-            # an array of discrete indices
-            for d in range(max_disp):
-                
-                # [cut out the left patch]
-                patch_l = padded_img_l[y - k_size : y + k_size + 1, x - k_size : x + k_size + 1]
-                patch_l = patch_l.reshape((patch_l.shape[0], patch_l.shape[1], -1))
-                print('patch_l = ', patch_l.shape)
+                # avoid out of bounds exceptions, if the given disparity is bigger than the kernel radius    
+                if x - d >= half_window:
+                    
+                    # patch_l stays the same for different d-Values
+                    patch_l = padded_img_l[y - half_window : y + half_window + 1, x - half_window : x + half_window + 1]
+                    patch_l = patch_l.reshape((patch_l.shape[0], patch_l.shape[1], 1))
 
-                # [cut out the right patch] // TODO: not sure if correct
-                # -> with disparity
-                patch_r = padded_img_r[y - k_size : y + k_size + 1, x - k_size - d : x + k_size - d + 1]
-                patch_r = patch_r.reshape((patch_r.shape[0], patch_r.shape[1], -1))
-                print('patch_r = ', patch_r.shape)
+                    # patch_r is the same window in the right imaged shifted by (-d)
+                    patch_r = padded_img_r[y - half_window : y + half_window + 1, x - half_window - d : x + half_window - d + 1]
+                    patch_r = patch_r.reshape((patch_r.shape[0], patch_r.shape[1], 1))
 
-                # calculate the cost, given the two patches and the alpha coefficient
-                cost = cost_function(patch_l, patch_r, alpha)
+                    # calculate the cost, given the two patches and the alpha coefficient
+                    cost = cost_function(patch_l, patch_r, alpha)
+                    if cost < cost_prev:
+                        cost_prev = cost
+                        best_d = d
+                else:
+                    # get out of the loop and set disparity to 0
+                    break
+            disparity[y, x] = best_d 
 
-                # check if the error is smaller and update the (current) best disparity 
-                if cost < cost_prev:
-                    cost_prev = cost
-                    best_d = d
-
-        # insert the best disparity-value for [y, x]into the final disparity-map 
-        disparity[y, x] = best_d
-
-
+    print('disparity = ', disparity.shape)
     plt.imshow(disparity)
     plt.show()
 
