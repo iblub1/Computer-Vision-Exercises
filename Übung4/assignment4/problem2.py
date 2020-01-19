@@ -1,4 +1,5 @@
 import numpy as np
+# import matplotlib.pyplot as plt
 
 def cost_ssd(patch1, patch2):
     """Compute the Sum of Squared Pixel Differences (SSD):
@@ -14,6 +15,8 @@ def cost_ssd(patch1, patch2):
     #
     # Your code goes here
     #
+    print('SSD | patch1 = ', patch1.shape, ' | patch2 = ', patch2.shape)
+
     cost_ssd = np.sum((patch1[:,:,0] - patch2[:,:,0])**2)
 
     assert np.isscalar(cost_ssd)
@@ -102,10 +105,11 @@ def pad_image(input_img, window_size, padding_mode='symmetric'):
                                         (w_pad, w_pad)),
                                 mode=padding_mode
                            )
-    
-    # print('window_size = ', window_size)
-    # print('input_img = ', input_img.shape)
-    # print('padded_img = ', padded_img.shape)
+    print('[pad_image]')
+    print('window_size = ', window_size)
+    print('input_img = ', input_img.shape)
+    print('padded_img = ', padded_img.shape)
+    print('\n')
 
     return padded_img
 
@@ -132,8 +136,19 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
     #
     # Your code goes here
     #
+
+    print('[compute_disparity] -> begin')
+    print('padded_img_l = [', padded_img_l.shape, ']')
+    print('padded_img_r = [', padded_img_r.shape, ']')
+    print('max_disp = [', max_disp, ']')
+    print('window_size = [', window_size, ']')
+
+    ## TODO: Idea
+    ## https://github.com/davechristian/Simple-SSD-Stereo/blob/master/stereomatch_SSD.py
+
     disparity = padded_img_l.copy()
 
+    print('[compute_disparity] -> end')
     assert disparity.ndim == 2
     return disparity
 
