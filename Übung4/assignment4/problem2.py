@@ -303,4 +303,4 @@ class WindowBasedDisparityMatching(object):
 
         """
 
-        return (1, 2, 2, 4)
+        return (1, 2, 1, 2)
