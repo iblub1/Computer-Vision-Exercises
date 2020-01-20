@@ -50,7 +50,7 @@ def problem2():
     print("Alpha: {:4.3f}".format(alpha))
 
     # Window size. You can freely change, but it should be an odd number
-    window_size = 11
+    window_size = 5
 
     # from utils.py
     im_left = rgb2gray(load_image("data/p2_left.png"))

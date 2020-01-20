@@ -18,15 +18,15 @@ def cost_ssd(patch1, patch2):
     
     # print('SSD | patch1 = ', patch1.shape, ' | patch2 = ', patch2.shape)
 
-    # input has size (m, m), not (m, m, 1), but we can handle either case
-    if patch1.ndim == patch2.ndim:
-        # patches are 2D
-        if patch1.ndim == 2:
-            cost_ssd = np.sum((patch1[:, :] - patch2[:,:])**2)
-        # patches are 3D
-        if patch1.ndim == 3:
-            cost_ssd = np.sum((patch1[:,:,0] - patch2[:,:,0])**2)
-
+    # if input has size (m, m), not (m, m, 1), but we can handle either case
+    
+    cost_ssd = np.sum((patch1 - patch2)**2)
+    # if patch1.ndim == patch2.ndim:
+    #     if patch1.ndim == 2: # patches are 2D
+    #         cost_ssd = np.sum((patch1 - patch2)**2)
+    #     if patch1.ndim == 3: # patches are 3D
+    #         cost_ssd = np.sum((patch1[:,:,0] - patch2[:,:,0])**2)
+        
     assert np.isscalar(cost_ssd)
     return cost_ssd
 
@@ -45,6 +45,9 @@ def cost_nc(patch1, patch2):
     #
     # Your code goes here
     #
+    assert patch1.shape == patch2.shape
+    assert patch1.shape[0] == patch1.shape[1]
+    m = patch1.shape[0]
 
     # According to source it also works to normalize the input first and then correlate if values are between [-1, 1] https://stackoverflow.com/questions/53436231/normalized-cross-correlation-in-python
     # Die Frage ist, ob diese Art von Normalisierung auch die richtige ist
@@ -58,8 +61,8 @@ def cost_nc(patch1, patch2):
     # cost_nc = np.correlate(patch1.flatten(), patch2.flatten(), 'full')
 
     # Ich glaube du meinst den pearson korr koefficient
-    patch1 = patch1.reshape(11, 11)
-    patch2 = patch2.reshape(11, 11)
+    patch1 = patch1.reshape(m, m)
+    patch2 = patch2.reshape(m, m)
     cost_nc = np.corrcoef(patch1, patch2)[1,0]
 
     assert np.isscalar(cost_nc)
@@ -115,7 +118,7 @@ def pad_image(input_img, window_size, padding_mode='symmetric'):
         2. pad the image
     '''
 
-    # padding is (11 // 2) = 5
+    # padding is e.g (11 // 2) = 5
     h_pad = w_pad = window_size // 2
 
     padded_img = np.lib.pad(input_img, ((h_pad, h_pad),
@@ -128,8 +131,6 @@ def pad_image(input_img, window_size, padding_mode='symmetric'):
     print('padded_img = ', padded_img.shape)
     print('\n')
 
-    plt.imshow(padded_img)
-    plt.show()
 
     return padded_img
 
@@ -157,18 +158,17 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
     # Your code goes here
     #
 
-    print('[compute_disparity] -> begin')
-    print('padded_img_l = [', padded_img_l.shape, ']')
-    print('padded_img_r = [', padded_img_r.shape, ']')
-    print('max_disp = [', max_disp, ']')
-    print('window_size = [', window_size, ']')
+    # print('[compute_disparity] -> begin')
+    # print('padded_img_l = [', padded_img_l.shape, ']')
+    # print('padded_img_r = [', padded_img_r.shape, ']')
+    # print('max_disp = [', max_disp, ']')
+    # print('window_size = [', window_size, ']')
 
     ## Code inspired by:
-    ## https://github.com/davechristian/Simple-SSD-Stereo/blob/master/stereomatch_SSD.py
+    # https://github.com/davechristian/Simple-SSD-Stereo/blob/master/stereomatch_SSD.py
+    ## 
 
     height, width = padded_img_l.shape
-    print('image.height = ', height)
-    print('image.width  = ', width)
 
     # [declaration of disparity-image]
     # disparity-image is an 8-Bit grayscale image
@@ -176,8 +176,7 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
     disparity = np.zeros((height, width), np.uint8)
 
     # [considering the padding]
-    # start at k_size and end at img_size - k_size
-    # depending on the window size
+    # start at half_window and end at img_size - half_window
     half_window = int(window_size / 2)
     
     ## [pixelwise computation of disparity of the image]
@@ -188,11 +187,13 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
     # 2.1) cut out a two windows W_L, W_R of the given window-size
     # 2.2) compute the cost function for W_L and W_R
     # 2.3) save the disparity with the lowest cost-value
-    #
+    # 3) ?
+    # 4) Profit
     
      # iterate over rows (height/y)
     for y in range(half_window, height - half_window):
         # print(".", end="", flush=True)
+        print('[y] = ', y)
         
         # iterate over columns (width/x)
         for x in range(half_window, width - half_window):
@@ -200,7 +201,7 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
             # initial value for disparity
             best_d = 0    
 
-            # cost initialized as very high value which will be updated if better cost is encountered
+            # cost initialized as very high value which will be updated if smaller cost is encountered
             cost_prev = np.inf
             
             # iterate over [0, ..., max_disp]
@@ -223,20 +224,14 @@ def compute_disparity(padded_img_l, padded_img_r, max_disp, window_size, alpha):
                         cost_prev = cost
                         best_d = d
                 else:
-                    # get out of the loop and set disparity to 0
                     break
+            # set the disparity for the current pixel
             disparity[y, x] = best_d 
 
+    # remove the padding to get the real disparity-image
+    disparity = disparity[half_window : height - half_window, half_window : width - half_window]
     print('disparity = ', disparity.shape)
-    plt.imshow(disparity)
-    plt.show()
 
-    
-    
-    
-    # disparity = padded_img_l.copy()
-
-    print('[compute_disparity] -> end')
     assert disparity.ndim == 2
     return disparity
 
@@ -250,6 +245,10 @@ def compute_aepe(disparity_gt, disparity_res):
     Returns:
         aepe: the average end-point error as a floating point value
     """
+
+    print('disparity_gt = ', disparity_gt.shape)
+    print('disparity_res = ', disparity_res.shape)
+
     assert disparity_gt.ndim == 2 
     assert disparity_res.ndim == 2 
     assert disparity_gt.shape == disparity_res.shape
@@ -257,8 +256,9 @@ def compute_aepe(disparity_gt, disparity_res):
     #
     # Your code goes here
     #
+    
     N = disparity_gt.shape[0] * disparity_gt.shape[1]
-    aepe = 1/N * np.linalg.norm(disparity_gt - disparity_res, ord=1)
+    aepe = (1 / N) * np.linalg.norm(disparity_gt - disparity_res, ord=1)
 
     assert np.isscalar(aepe)
     return aepe
@@ -270,6 +270,7 @@ def optimal_alpha():
     #
     # Fix alpha
     #
+
     alpha = -0.01
     return alpha
 

@@ -253,8 +253,15 @@ def estimate_F(x1, x2, t_func):
     """
 
     # 1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
+    
+    # Version 1
     T_1 = transform(x1)
     T_2 = transform(x2)
+
+    # Version 2
+    # T_1 = transform_v2(x1)
+    # T_2 = transform_v2(x2)
+
 
     # 2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
     #   returns vector (homogenous)
@@ -311,8 +318,6 @@ def line_y(xs, F, pts):
     print('l.shape = ', l.shape)
     print('lx = ', lx.shape, ' | ly = ', ly.shape, ' | lz = ', lz.shape)
 
-    # ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
-    # print('ys = ', ys.shape)
 
     '''
         line = dot(F,x)
@@ -321,9 +326,9 @@ def line_y(xs, F, pts):
         lt = array([(line[2]+line[0]*tt)/(-line[1]) for tt in t])
     '''
 
-    ys = np.array([-(lz + lx * xi) / ly for xi in xs]).T
+    ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
     print('ys = ', ys.shape)
-
+    
     assert ys.shape == (M, N)
     return ys
 
@@ -355,8 +360,13 @@ def transform_v2(pts):
            https://stats.stackexchange.com/questions/178626/how-to-normalize-data-between-1-and-1
         2. Scale the data to have the averag distance sqrt(2) from the center 
     '''
-    T = np.empty((3, 3))
-    
+
+    # get mean of x/y-axis
+    t = np.mean(pts, axis=0)
+    s = np.sqrt(2)
+    T = np.array([[1/s, 0, -(t[0]/s)], [0, 1/s, -(t[1]/s)], [0, 0, 1]])
+    # scaled Point [ 1/s * (x - mu_x), 1/s * (y - mu_y), 1]
+
     return T
 
 
