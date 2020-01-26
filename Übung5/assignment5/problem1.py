@@ -36,8 +36,8 @@ def compute_derivatives(im1, im2):
     D_y = 1/2 * np.array([1, 0, -1]).reshape((3,1))
 
     
-    Ix = convolve2d(im1, D_x, mode="same")
-    Iy = convolve2d(im1, D_y, mode="same")
+    Ix = convolve2d(im1, D_x, mode="same", boundary="symm")
+    Iy = convolve2d(im1, D_y, mode="same", boundary="symm")
     It = im2 - im1
 
     # Debugging
@@ -78,23 +78,12 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     # Your code here
     #
 
-    """
-    nabla_I = np.stack((Ix, Iy), axis=0)
-    print("nabla_I: ", nabla_I.shape)
-
-    nabla_I_T = np.transpose(nabla_I, axes=[0,2,1])
-    print("nabla_I.T: ", nabla_I_T.shape)
-    
-    produkt = np.tensordot(nabla_I, nabla_I_T, axes=[1,0])
-    print("produkt ", produkt)
-    """
-    R = patch_size**2
+    #R = patch_size**2
     #Ix_flat = Ix.flatten()
     #Iy_flat = Iy.flatten()
     #It_flat = It.flatten()
 
-    # EXTREMLY SLOW IMPLEMENTATION
-    print("Extremly slow implementation of lucas Kanade. Takes a few min. You have been warned.")
+    print("Extremly slow implementation of lucas Kanade. Takes about 5min. You have been warned.")
     print(time.time())
 
     # Loop through each pixel
