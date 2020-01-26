@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.signal import convolve2d
+import time
 
 ######################
 # Basic Lucas-Kanade #
@@ -77,31 +78,70 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     # Your code here
     #
 
-
-    # NOT WORKING
-
     """
+    nabla_I = np.stack((Ix, Iy), axis=0)
+    print("nabla_I: ", nabla_I.shape)
+
+    nabla_I_T = np.transpose(nabla_I, axes=[0,2,1])
+    print("nabla_I.T: ", nabla_I_T.shape)
     
-    nabla_I = np.concatenate((Ix, Iy), axis=0)
-    #nabla_I = np.stack((Ix, Iy), axis=0)
-    
-    term_0 = np.dot(nabla_I, nabla_I.T)
-    print(term_0.shape)
-
-    term_01 = np.sum(term_0[:388,:]).reshape((1, 1))
-    term_02 = np.sum(term_0[388:,:]).reshape((1, 1))
-
-    term_1 = np.concatenate((term_01, term_02), axis=0)
-    print(term_1.shape)
-    term_1_inv = np.linalg.inv(term_1)
-
-    term_2 = np.sum(It * nabla_I, axis=1)
-    print(term_2.shape)
-
-    result = term_1_inv * term_2
-    print(result.shape)
-
+    produkt = np.tensordot(nabla_I, nabla_I_T, axes=[1,0])
+    print("produkt ", produkt)
     """
+    R = patch_size**2
+    #Ix_flat = Ix.flatten()
+    #Iy_flat = Iy.flatten()
+    #It_flat = It.flatten()
+
+    # EXTREMLY SLOW IMPLEMENTATION
+    print("Extremly slow implementation of lucas Kanade. Takes a few min. While waiting, you can try to vetorize this function to improve performance.")
+    print(time.time())
+
+    for row_i in range(Ix.shape[0]):
+        for col_i in range(Ix.shape[1]):
+            term_1 = np.zeros((2,2))
+            term_2 = np.zeros((2,1))
+
+            for win_r_ii in range(patch_size):
+                for win_c_ii in range(patch_size):
+
+                    win_r_i = win_r_ii - int(patch_size/2)
+                    win_c_i = win_c_ii - int(patch_size/2)
+                    
+                    if (win_r_i+row_i < 0 or win_r_i+row_i >= Ix.shape[0]) or (win_c_i+col_i < 0 or win_c_i+col_i >= Ix.shape[1]):
+                        I_x = 0
+                        I_y = 0
+                        I_t = 0
+                    else:                     
+                        I_x = Ix[row_i + win_r_i,  col_i + win_c_i]
+                        I_y = Iy[row_i + win_r_i,  col_i + win_c_i]
+                        I_t = It[row_i + win_r_i,  col_i + win_c_i]
+
+                    nabla_I = np.array([I_x, I_y]).reshape((2,1))
+                    nabla_I_T = np.array([I_x, I_y]).reshape((1,2))
+
+                    dot_1 = np.dot(nabla_I, nabla_I_T)
+                    dot_2 = I_t * nabla_I
+
+                    assert dot_1.shape == (2, 2)
+                    assert dot_2.shape == (2, 1)
+                    
+                    term_1 = term_1 + dot_1
+                    term_2 = term_2 + dot_2
+            
+            term_1_I = np.linalg.inv(term_1)
+
+            result = np.dot(term_1_I, term_2)
+            assert result.shape == (2, 1)
+
+            u_i = result[0,:]
+            v_i = result[1,:]
+
+            u[row_i, col_i] = u_i
+            v[row_i, col_i] = v_i
+                    
+
+
 
     
     assert u.shape == Ix.shape and \
