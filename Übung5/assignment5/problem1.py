@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.signal import convolve2d
 
 ######################
 # Basic Lucas-Kanade #
@@ -24,6 +25,28 @@ def compute_derivatives(im1, im2):
     # Your code here
     #
     
+    # Taken from: Lecture 3 (filtering continued) - Slide 39
+    # print("Calculating convolutions for derivatives. This might take a while.")
+    # D_x = 1/6 * np.array([[1, 0, -1], [1, 0, -1], [1, 0, -1]])
+    # D_y = 1/6 * np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
+
+    # Vereinfachte Kernel. Haben kein smoothing, nur die Ableitung
+    D_x = 1/2 * np.array([1, 0, -1]).reshape((1,3))
+    D_y = 1/2 * np.array([1, 0, -1]).reshape((3,1))
+
+    
+    Ix = convolve2d(im1, D_x, mode="same")
+    Iy = convolve2d(im1, D_y, mode="same")
+    It = im2 - im1
+
+    # Debugging
+    print("Following prints should all have the same shape: ")
+    print("shape Im: ", im1.shape)
+    print("shape Ix: ", Ix.shape)
+    print("shape Iy: ", Iy.shape)
+    print("shape It: ", It.shape)
+    print("\n")
+
     assert Ix.shape == im1.shape and \
            Iy.shape == im1.shape and \
            It.shape == im1.shape
