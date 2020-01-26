@@ -94,29 +94,35 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     #It_flat = It.flatten()
 
     # EXTREMLY SLOW IMPLEMENTATION
-    print("Extremly slow implementation of lucas Kanade. Takes a few min. While waiting, you can try to vetorize this function to improve performance.")
+    print("Extremly slow implementation of lucas Kanade. Takes a few min. You have been warned.")
     print(time.time())
 
+    # Loop through each pixel
     for row_i in range(Ix.shape[0]):
         for col_i in range(Ix.shape[1]):
             term_1 = np.zeros((2,2))
             term_2 = np.zeros((2,1))
 
+            # Loop through window
             for win_r_ii in range(patch_size):
                 for win_c_ii in range(patch_size):
 
                     win_r_i = win_r_ii - int(patch_size/2)
                     win_c_i = win_c_ii - int(patch_size/2)
                     
+                    # Check if we're trying to access pixels outside the given picture
                     if (win_r_i+row_i < 0 or win_r_i+row_i >= Ix.shape[0]) or (win_c_i+col_i < 0 or win_c_i+col_i >= Ix.shape[1]):
+                        # Set everything to zero if we're at the corner of the picture
                         I_x = 0
                         I_y = 0
                         I_t = 0
                     else:                     
+                        # Get derivative values for pixel
                         I_x = Ix[row_i + win_r_i,  col_i + win_c_i]
                         I_y = Iy[row_i + win_r_i,  col_i + win_c_i]
                         I_t = It[row_i + win_r_i,  col_i + win_c_i]
 
+                    # Do the calculations (slide 55). This is the part inside the sum
                     nabla_I = np.array([I_x, I_y]).reshape((2,1))
                     nabla_I_T = np.array([I_x, I_y]).reshape((1,2))
 
@@ -129,6 +135,7 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
                     term_1 = term_1 + dot_1
                     term_2 = term_2 + dot_2
             
+            # Do the calculations (slide 55). This is the part outside the sum
             term_1_I = np.linalg.inv(term_1)
 
             result = np.dot(term_1_I, term_2)
@@ -137,12 +144,10 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
             u_i = result[0,:]
             v_i = result[1,:]
 
+            # Store result
             u[row_i, col_i] = u_i
             v[row_i, col_i] = v_i
                     
-
-
-
     
     assert u.shape == Ix.shape and \
             v.shape == Ix.shape
