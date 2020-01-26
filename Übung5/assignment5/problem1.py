@@ -233,6 +233,10 @@ def downsample_x2(x, fsize=5, sigma=1.4):
     # Your code here
     #
 
+    g_kernel = gaussian_kernel(fsize, sigma)
+    g_img = convolve2d(x, g_kernel, mode='same', boundary='symm')
+    x = g_img[0::2, 0::2]
+
     return x
 
 def gaussian_pyramid(img, nlevels=3, fsize=5, sigma=1.4):
@@ -254,7 +258,12 @@ def gaussian_pyramid(img, nlevels=3, fsize=5, sigma=1.4):
     # Your code here
     #
 
-    return [img]
+    GP = [None] * nlevels
+    GP[0] = img
+    for i in range(1, nlevels):
+        GP[i] = downsample_x2(img, fsize, sigma)
+
+    return GP
 
 ###############################
 # Coarse-to-fine Lucas-Kanade #
