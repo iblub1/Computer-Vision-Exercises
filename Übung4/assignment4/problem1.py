@@ -19,8 +19,7 @@ def transform(pts):
     #
 
     t_x, t_y = np.mean(pts, axis=0) # mean along x/y-Dimension (2,)
-    s = 0.5 * np.max(np.abs(pts))   # max-norm (1,)
-    # s = 0.5 * np.max(np.linalg.norm(pts, axis=1))
+    s = 0.5 * np.max(np.linalg.norm(pts, axis=1))
     T = np.array([[1/s, 0 , -t_x/s], [0, 1/s, -t_y/s], [0, 0, 1]]) # conditional matrix (3, 3)
 
     assert T.shape == (3, 3)
@@ -50,10 +49,6 @@ def transform_pts(pts, T):
     # (3,3)     (3, 19)  = (3, 19).T  = (19, 3) * (3,3)
     pts_h = T @ np.c_[pts, np.ones((len(pts), 1))].T
     pts_out = pts_h.T
-    # pts_out_ = np.c_[pts, np.ones((len(pts), 1))].dot(T.T)
-
-    # pts_h == pts_h_ => True
-    
 
     assert pts_out.shape == (pts.shape[0], 3)
     return pts_out
@@ -75,8 +70,8 @@ def create_A(pts1, pts2):
     # Your code goes here
     #
 
-    x,  y  = pts1[:, 0], pts1[:, 1] # x/y-Vector from pts1 (19,), (19,)
-    x_, y_ = pts2[:, 0], pts2[:, 1] # x/y-Vector from pts2 (19,), (19,)
+    x,  y  = pts2[:, 0], pts2[:, 1] # x/y-Vector from pts1 (19,), (19,)
+    x_, y_ = pts1[:, 0], pts1[:, 1] # x/y-Vector from pts2 (19,), (19,)
     ones   = np.ones_like(x)        # (19,)
 
     #     [  1      2      3           9  ]
@@ -145,13 +140,7 @@ def compute_F(A):
     # transposed version of V -> (V_A.T)[-1]
     #
     # (V_A.T)[:,-1] <=> V_A[-1,:]
-    F_tilde = V_AT[-1].reshape((3, 3))
-
-    # Equal to the upper eqpression
-    # F_tilde = np.array([[V_A[0][8], V_A[1][8], V_A[2][8]], 
-    #                     [V_A[3][8], V_A[4][8], V_A[5][8]],
-    #                     [V_A[6][8], V_A[7][8], V_A[8][8]]]
-    #                   )            
+    F_tilde = V_AT[-1].reshape((3, 3))            
 
     # Enforce Rank 2 
     F_final = enforce_rank2(F_tilde)
@@ -174,15 +163,7 @@ def compute_residual(F, x1, x2):
     # Your code goes here
     #
 
-    # This probably needs debugging
-    # TODO
-
     assert x1.shape == x2.shape
-
-    print('Residual')
-    # print('x1 = ', x1.shape)
-    # print('x2 = ', x2.shape)
-    # print('F  = ', F.shape)
 
     sum_g = 0
     for x_1i, x_2i in zip(x1, x2):
@@ -212,8 +193,7 @@ def denorm(F, T1, T2):
     #
 
     # calculation as seen in v7, page 71
-    print('T1 = ', T1.shape, ' | T2 = ', T2.shape)
-    
+    #     
     ## Unsure which to use!!
     # F_unc = T1.T @ F @ T2
     F_unc = T2.T.dot(F).dot(T1)
@@ -241,27 +221,23 @@ def estimate_F(x1, x2, t_func):
     # Your code goes here
     #
 
-    """Pseudo-Code:
-    1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
-    2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
-    3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
-    4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
-    5. use "denorm" with F, T_1 and T_2 to denormalize F 
-    6. Computation of residuals to check the satisfiability of the result 
-    7. ??
-    8. Profit
+    """
+        Pseudo-Code:
+        1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
+        2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
+        3. use "create_A" with pts_h1 and pts_h2 as input to get A matrix
+        4. use "compute_F" with A to get F_final (this method uses enforce_rank_2
+        5. use "denorm" with F, T_1 and T_2 to denormalize F 
+        6. Computation of residuals to check the satisfiability of the result 
+        7. ??
+        8. Profit
     """
 
     # 1. use "transform" twice to get T_1 and T_2 for pts1 and pts2
     
     # Version 1
-    T_1 = transform(x1)
-    T_2 = transform(x2)
-
-    # Version 2
-    # T_1 = transform_v2(x1)
-    # T_2 = transform_v2(x2)
-
+    T_1 = t_func(x1)
+    T_2 = t_func(x2)
 
     # 2. use "transform_pts" twice to get transformed points pts_h1 and pts_h2
     #   returns vector (homogenous)
@@ -306,28 +282,11 @@ def line_y(xs, F, pts):
     #
     # Your code goes here
     #
-
-    print('----> LINE_Y <----')
-    print('xs = ', xs.shape, ' | F = ', F.shape, ' | pts = ', pts.shape)
     
     # contstruct epipolar line
-    # l1 = F * x2 | l2 = F * x1
     l = F.dot(pts.T)
     lx, ly, lz = l[0, :], l[1, :], l[2, :]
-
-    print('l.shape = ', l.shape)
-    print('lx = ', lx.shape, ' | ly = ', ly.shape, ' | lz = ', lz.shape)
-
-
-    '''
-        line = dot(F,x)
-        # epipolar line parameter and values
-        t = linspace(0,n,100)
-        lt = array([(line[2]+line[0]*tt)/(-line[1]) for tt in t])
-    '''
-
     ys = np.array([(lz + lx * xi) / (-ly) for xi in xs]).T
-    print('ys = ', ys.shape)
     
     assert ys.shape == (M, N)
     return ys
@@ -354,20 +313,14 @@ def transform_v2(pts):
     # Your code goes here
     #
 
-    '''
-        Possible Approach
-        1. Normalize the datapoints to lie between -1 and 1
-           https://stats.stackexchange.com/questions/178626/how-to-normalize-data-between-1-and-1
-        2. Scale the data to have the averag distance sqrt(2) from the center 
-    '''
-
     # get mean of x/y-axis
     t = np.mean(pts, axis=0)
-    s = np.sqrt(2)
-    T = np.array([[1/s, 0, -(t[0]/s)], [0, 1/s, -(t[1]/s)], [0, 0, 1]])
-    # scaled Point [ 1/s * (x - mu_x), 1/s * (y - mu_y), 1]
-
-    return T
+    dist = np.array([np.linalg.norm(p) for p in pts])
+    s_dev = np.std(dist)
+    s = np.sqrt(2) / s_dev
+    
+    T = np.array([[1, 0, -(t[0])], [0, 1, -(t[1])], [0, 0, 1]])
+    return T * s
 
 
 """Multiple-choice question"""
@@ -415,11 +368,13 @@ def compute_epipole(F, eps=1e-8):
     # Your code goes here
     #
 
-    from scipy.linalg import null_space # Are we allowed to use this??? Wir haben auch schonmal Nullspace irgendwo früher berechnet.
-    # Epiploes are the left and right Nullspace of the fundamental matrix (slide 19)
-    e = null_space(F)
-
-    return e
+    #inpsired by
+    # scipy-cookbook.readthedocs.io/items/RankNullspace.html
+    _, S, VT = np.linalg.svd(F)
+    nnz = (S >= eps).sum()
+    e = VT[nnz:].conj().T
+    e = e / e[2]
+    return e[:2]
 
 def intrinsics_K(f=1.05, h=480, w=640):
     """Return 3x3 camera matrix.
@@ -439,22 +394,10 @@ def intrinsics_K(f=1.05, h=480, w=640):
     # Source: lecture 2 slide 6 (??)
     # Nicht sicher ob wir h und w nicht doch aus den Bildern bestimmen sollen statt die defaults zu nehmen
 
-    #ax = f / w  # focal length / image width
-    #ay = f / h  # focal length / image height
-    #center_x = w / 2  # principal point in pixel (x-coordinate)
-    #center_y = h / 2  # principal point in pixel (y-coordinate)
-    #s = 0 # Camera skew
-
-    ax = f
-    ay = f
-    center_x = w
-    center_y = h 
-    s = 0
-
     K = np.array([
-                [ax, s, center_x],
-                [0, ay, center_y], 
-                [0, 0, 1]
+                  [f, 0, w/2],
+                  [0, f, h/2], 
+                  [0, 0,  1 ]
                 ])
 
     return K
@@ -476,11 +419,7 @@ def compute_E(F):
     #
 
     # Source: Slide 17: K_1^-T @ E @ K_2^-1 = F
-    # I assume that K_1 = K_2 = K (?)
-    # Meaning we have: K^-T @ E @ K-1 = F
-    # E = K^T @ F @ K
     K = intrinsics_K()
-    
     E = K.T @ F @ K
 
     assert E.shape == (3,3)
