@@ -76,6 +76,33 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     #
     # Your code here
     #
+
+
+    # NOT WORKING
+
+    """
+    
+    nabla_I = np.concatenate((Ix, Iy), axis=0)
+    #nabla_I = np.stack((Ix, Iy), axis=0)
+    
+    term_0 = np.dot(nabla_I, nabla_I.T)
+    print(term_0.shape)
+
+    term_01 = np.sum(term_0[:388,:]).reshape((1, 1))
+    term_02 = np.sum(term_0[388:,:]).reshape((1, 1))
+
+    term_1 = np.concatenate((term_01, term_02), axis=0)
+    print(term_1.shape)
+    term_1_inv = np.linalg.inv(term_1)
+
+    term_2 = np.sum(It * nabla_I, axis=1)
+    print(term_2.shape)
+
+    result = term_1_inv * term_2
+    print(result.shape)
+
+    """
+
     
     assert u.shape == Ix.shape and \
             v.shape == Ix.shape
@@ -110,6 +137,10 @@ def compute_cost(im1, im2):
     #
     # Your code here
     #
+
+    # The minimized cost function should be SSD. Slide 36
+    # Code taken from assignment 4
+    d = np.sum((im2 - im1)**2)
 
     assert isinstance(d, float)
     return d
@@ -228,7 +259,13 @@ def task9_answer():
     4. Lucas-Kanade method implicitly incorporates smoothness constraints, i.e.
        that the flow vector of neighbouring pixels should be similar.
     5. Lucas-Kanade is not robust to brightness changes.
-
+ 
+    Answers: 
+    1. Yes, since disparity is a window-based approach. Slide 5
+    2. No, Lucas-Kanade assummes small motion (because of Taylor-approximation). Slide 34
+    3. ??
+    4. Yes, Lucas-Kanade assumes spatial smoothness of the flow (dispartiy values change slowly). ??
+    5. Yes, Lucas-Kanade assumes constant brightness. So its not robust vs brightness changes. Slide 27
     """
 
-    return (-1, -2, -3)
+    return (1, 3, 4, 5)
