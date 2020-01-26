@@ -1,0 +1,5 @@
+assignment_v2.zip
+- fixes inconsistency in description 
+  (see https://moodle.tu-darmstadt.de/mod/forum/discuss.php?d=108988)
+- contains only minor changes. You don not have to use it, 
+  if you've already implemented your code using assignment.zip.
