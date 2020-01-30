@@ -160,6 +160,10 @@ def warp(im, u, v):
     # Your code here
     #
 
+    print('im = ', im.shape)
+    print('u = ', u.shape)
+    print('v = ', v.shape)
+
     assert im_warp.shape == im.shape
     return im_warp
 
