@@ -78,6 +78,129 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     # Your code here
     #
 
+    # radius of the patch
+    w = patch_size // 2
+
+    # image dimensions
+    rows = Ix.shape[0]
+    cols = Ix.shape[1]
+
+
+    # Currently not in use! Maybe later?!
+    '''
+    # construct elements of Nabla I to use later
+    Ix2 = np.square(Ix)
+    Ixy = Ix * Iy
+    Iy2 = np.square(Iy)
+    Itx = Ix * It
+    Ity = Iy * It
+
+    if aggregate == 'gaussian':
+        G = gaussian_kernel(fsize=5, sigma=sigma)
+        Ix2 = convolve2d(Ix2, G)
+        Ixy = convolve2d(Ixy, G)
+        Iy2 = convolve2d(Iy2, G)
+    '''
+
+
+    # inspired by this wikipedia article
+    # https://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
+    # and especially this youtube video (dimensions of terms)
+    # https://www.youtube.com/watch?v=dVlRiJ-Xz8I
+
+
+    ## start = time.time()
+
+    for r in range(w, rows - w):
+        for c in range(w, cols - w):
+            if False and r % 10 == 0 and c % 10 == 0:
+                print('[r | c] = [{} | {}]'.format(r, c))
+            
+            #####################################################
+            #  construct the needed structures for calculation  #
+            #####################################################
+
+            # current patch of Ix as falttened matrix -> vector 
+            # size: [patch_size * patch_size, 1]
+            Ix_rc = Ix[r - w : r + w + 1, c - w : c + w + 1].flatten()
+            Ix_rc = Ix_rc.reshape((Ix_rc.shape[0], 1))
+
+            # current patch of Iy as falttened matrix -> vector
+            # size: [patch_size * patch_size, 1]
+            Iy_rc = Iy[r - w : r + w + 1, c - w : c + w + 1].flatten()
+            Iy_rc = Iy_rc.reshape((Iy_rc.shape[0], 1))
+
+            # current patch of It as falttened matrix -> vector
+            # size: [patch_size * patch_size, 1]
+            It_rc = It[r - w : r + w + 1, c - w : c + w + 1].flatten()
+            It_rc = It_rc.reshape((It_rc.shape[0], 1))
+
+
+            # concatenate the Ix and the Iy vector
+            # size: [patch_size^2, 2]
+            nabla_I   = np.c_[Ix_rc, Iy_rc]
+
+            # size: [2, patch_size^2]
+            nabla_I_T = nabla_I.T
+            # print('Nabla_I = ', nabla_I.shape, ' | Nabla_I.T = ', nabla_I_T.shape)
+
+
+            #################################
+            #   calculation of U = [u, v]   #
+            #################################
+
+            ## current step: M * U = b
+
+            ## left hand side: nabla_I.T * nabla_T * U
+
+            # M = nabla_I.T * nabla_I
+            # size: [2, 2] = [2, patch_size^2] * [patch_size^2, 2]
+            M = nabla_I_T.dot(nabla_I)
+
+            ## right hand side: b = nabla_I.T * (-It)
+            b = nabla_I_T.dot(-It_rc)
+            # print('b = ', b.shape)
+
+            # next step in calculation: U = inv(M) * nabla_I.T * (-It)
+            M_inv = np.linalg.inv(M)
+            U = M_inv.dot(b)
+
+            u[r, c] = U[0]
+            v[r, c] = U[1]
+
+    ## end = time.time()
+    ## seconds = end - start
+    ## print('Lucas-Kanade needed {} seconds'.format(seconds))
+
+    assert u.shape == Ix.shape and \
+            v.shape == Ix.shape
+    return u, v
+
+
+def _compute_motion(Ix, Iy, It, patch_size=21, aggregate="const", sigma=2):
+    """Computes one iteration of optical flow estimation.
+    
+    Args:
+        Ix, Iy, It: image derivatives w.r.t. x, y and t
+        patch_size: specifies the side of the square region R in Eq. (1)
+        aggregate: 0 or 1 specifying the region aggregation region
+        sigma: if aggregate=='gaussian', use this sigma for the Gaussian kernel
+    Returns:
+        u: optical flow in x direction
+        v: optical flow in y direction
+    
+    All outputs have the same dimensionality as the input
+    """
+    assert Ix.shape == Iy.shape and \
+            Iy.shape == It.shape
+
+    u = np.empty_like(Ix)
+    v = np.empty_like(Iy)
+
+    #
+    # Your code here
+    #
+
     #R = patch_size**2
     #Ix_flat = Ix.flatten()
     #Iy_flat = Iy.flatten()
@@ -114,6 +237,8 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
                     # Do the calculations (slide 55). This is the part inside the sum
                     nabla_I = np.array([I_x, I_y]).reshape((2,1))
                     nabla_I_T = np.array([I_x, I_y]).reshape((1,2))
+                    
+                    # print('nabla_I = ', nabla_I.shape, ' | nabla_I.T = ', nabla_I.T.shape)
 
                     dot_1 = np.dot(nabla_I, nabla_I_T)
                     dot_2 = I_t * nabla_I
