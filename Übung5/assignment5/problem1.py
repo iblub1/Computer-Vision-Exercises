@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.signal import convolve2d
+from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
 import time
 
 ######################
@@ -284,10 +286,11 @@ def warp(im, u, v):
     #
     # Your code here
     #
+    ## Hint: You may find function griddata from package scipy.interpolate useful
 
-    print('im = ', im.shape)
-    print('u = ', u.shape)
-    print('v = ', v.shape)
+
+    print('im = ', im.shape, ' | u = ', u.shape, ' | v = ', v.shape)
+
 
     assert im_warp.shape == im.shape
     return im_warp
