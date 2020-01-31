@@ -269,6 +269,25 @@ def _compute_motion(Ix, Iy, It, patch_size=21, aggregate="const", sigma=2):
             v.shape == Ix.shape
     return u, v
 
+## Additional Code
+# construct Grid
+def get_grid(y, x, homogenous=False):
+    # indices of image (row = y, column = x)
+    coords = np.indices((y, x)).reshape(2, -1)
+    if homogenous: # grid with homogenous coordinates
+        grid = np.vstack((coords, np.ones(coords.shape[1])))
+        # np.c_[coords, np.ones(coords.shape[1])]
+    else:          # grid with non-homogenous coordinates
+        grid = coords
+    return grid
+
+# function for warping
+def warp_matrix(tx, ty):
+    h = np.array([[1, 0, tx],
+                  [0, 1, ty],
+                  [0, 0,  1]])
+    return h
+
 def warp(im, u, v):
     """Warping of a given image using provided optical flow.
     
@@ -287,9 +306,40 @@ def warp(im, u, v):
     # Your code here
     #
     ## Hint: You may find function griddata from package scipy.interpolate useful
+    ## code inspired by: https://towardsdatascience.com/image-geometric-transformation-in-numpy-and-opencv-936f5cd1d315
+    
+    # h(x, y) = (u + x, v + y) -> im_warp
+    rows, cols = im.shape
+    grid_indices = (get_grid(rows, cols, homogenous=False)).T   # returns (y, x)-Indices as v-stacked Matrix
+    y_indices = grid_indices[:, 0]
+    x_indices = grid_indices[:, 1]
+
+    # index-matrix for warped coordinates (same size as origonal grid)
+    warp_grid = np.zeros_like(grid_indices)
+    y_indices_warp = warp_grid[:, 0]
+    x_indices_warp = warp_grid[:, 1]
+
+    # N = Number of indices -> grid_indices.shape[0]
+    N = grid_indices.shape[0]
+    
+    print('----> max_y = ', np.max(grid_indices[:, 0])) # y-column
+    print('----> max_x = ', np.max(grid_indices[:, 1])) # x-column
 
 
-    print('im = ', im.shape, ' | u = ', u.shape, ' | v = ', v.shape)
+    for i in range(0, N):
+        x_i, y_i = x_indices[i], y_indices[i]
+
+        tx = u[y_i, x_i]
+        ty = v[y_i, x_i]
+
+        # new indices for warp-grid
+        x_indices_warp[i] = x_i + tx
+        y_indices_warp[i] = y_i + ty
+
+        
+
+        
+
 
 
     assert im_warp.shape == im.shape

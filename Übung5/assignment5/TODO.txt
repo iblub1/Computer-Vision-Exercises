@@ -1,5 +1,6 @@
 Functions:
-- warp
-- downsample_x2     -> DONE !?
-- gaussian_pyramid  -> DONE !?
-- coarse_to_fine
+- compute_motion    -> DONE (fast)
+- warp              -> TODO
+- downsample_x2     -> DONE
+- gaussian_pyramid  -> DONE
+- coarse_to_fine    -> TODO
