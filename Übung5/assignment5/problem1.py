@@ -281,12 +281,7 @@ def get_grid(y, x, homogenous=False):
         grid = coords
     return grid
 
-# function for warping
-def warp_matrix(tx, ty):
-    h = np.array([[1, 0, tx],
-                  [0, 1, ty],
-                  [0, 0,  1]])
-    return h
+
 
 def warp(im, u, v):
     """Warping of a given image using provided optical flow.
@@ -336,10 +331,20 @@ def warp(im, u, v):
         x_indices_warp[i] = x_i + tx
         y_indices_warp[i] = y_i + ty
 
-        
+    print('Indices: ')
+    print('x_i_w = ', x_indices_warp.shape, ' | y_i_w = ', y_indices_warp.shape)
+    
+    # stack up the y- and x-coordinates to be suitable input of griddata
+    warp_points = np.stack([y_indices_warp, x_indices_warp])
+    print('points = ', warp_points.shape)
 
-        
 
+    # interpolate real values to discrete values
+    im_warp = griddata(warp_points, im, (y_indices, x_indices), method='linear')
+
+    print('im_warp = ', im_warp.shape)
+    plt.imshow(im_warp)
+    plt.show()
 
 
     assert im_warp.shape == im.shape
