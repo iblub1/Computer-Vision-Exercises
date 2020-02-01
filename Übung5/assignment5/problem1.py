@@ -110,14 +110,8 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     # and especially this youtube video (dimensions of terms)
     # https://www.youtube.com/watch?v=dVlRiJ-Xz8I
 
-
-    ## start = time.time()
-
     for r in range(w, rows - w):
-        for c in range(w, cols - w):
-            if False and r % 10 == 0 and c % 10 == 0:
-                print('[r | c] = [{} | {}]'.format(r, c))
-            
+        for c in range(w, cols - w):            
             #####################################################
             #  construct the needed structures for calculation  #
             #####################################################
@@ -170,104 +164,10 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
             u[r, c] = U[0]
             v[r, c] = U[1]
 
-    ## end = time.time()
-    ## seconds = end - start
-    ## print('Lucas-Kanade needed {} seconds'.format(seconds))
-
     assert u.shape == Ix.shape and \
             v.shape == Ix.shape
     return u, v
 
-
-def _compute_motion(Ix, Iy, It, patch_size=21, aggregate="const", sigma=2):
-    """Computes one iteration of optical flow estimation.
-    
-    Args:
-        Ix, Iy, It: image derivatives w.r.t. x, y and t
-        patch_size: specifies the side of the square region R in Eq. (1)
-        aggregate: 0 or 1 specifying the region aggregation region
-        sigma: if aggregate=='gaussian', use this sigma for the Gaussian kernel
-    Returns:
-        u: optical flow in x direction
-        v: optical flow in y direction
-    
-    All outputs have the same dimensionality as the input
-    """
-    assert Ix.shape == Iy.shape and \
-            Iy.shape == It.shape
-
-    u = np.empty_like(Ix)
-    v = np.empty_like(Iy)
-
-    #
-    # Your code here
-    #
-
-    #R = patch_size**2
-    #Ix_flat = Ix.flatten()
-    #Iy_flat = Iy.flatten()
-    #It_flat = It.flatten()
-
-    print("Extremly slow implementation of lucas Kanade. Takes about 5min. You have been warned.")
-    print(time.time())
-
-    # Loop through each pixel
-    for row_i in range(Ix.shape[0]):
-        for col_i in range(Ix.shape[1]):
-            term_1 = np.zeros((2,2))
-            term_2 = np.zeros((2,1))
-
-            # Loop through window
-            for win_r_ii in range(patch_size):
-                for win_c_ii in range(patch_size):
-
-                    win_r_i = win_r_ii - int(patch_size/2)
-                    win_c_i = win_c_ii - int(patch_size/2)
-                    
-                    # Check if we're trying to access pixels outside the given picture
-                    if (win_r_i+row_i < 0 or win_r_i+row_i >= Ix.shape[0]) or (win_c_i+col_i < 0 or win_c_i+col_i >= Ix.shape[1]):
-                        # Set everything to zero if we're at the corner of the picture
-                        I_x = 0
-                        I_y = 0
-                        I_t = 0
-                    else:                     
-                        # Get derivative values for pixel
-                        I_x = Ix[row_i + win_r_i,  col_i + win_c_i]
-                        I_y = Iy[row_i + win_r_i,  col_i + win_c_i]
-                        I_t = It[row_i + win_r_i,  col_i + win_c_i]
-
-                    # Do the calculations (slide 55). This is the part inside the sum
-                    nabla_I = np.array([I_x, I_y]).reshape((2,1))
-                    nabla_I_T = np.array([I_x, I_y]).reshape((1,2))
-                    
-                    # print('nabla_I = ', nabla_I.shape, ' | nabla_I.T = ', nabla_I.T.shape)
-
-                    dot_1 = np.dot(nabla_I, nabla_I_T)
-                    dot_2 = I_t * nabla_I
-
-                    assert dot_1.shape == (2, 2)
-                    assert dot_2.shape == (2, 1)
-                    
-                    term_1 = term_1 + dot_1
-                    term_2 = term_2 + dot_2
-            
-            # Do the calculations (slide 55). This is the part outside the sum
-            term_1_I = np.linalg.inv(term_1)
-
-            result = np.dot(term_1_I, term_2)
-            assert result.shape == (2, 1)
-
-            u_i = result[0,:]
-            v_i = result[1,:]
-
-            # Store result
-            u[row_i, col_i] = u_i
-            v[row_i, col_i] = v_i
-                    
-    
-    assert u.shape == Ix.shape and \
-            v.shape == Ix.shape
-    return u, v
 
 ## Additional Code
 # construct Grid
@@ -282,8 +182,60 @@ def get_grid(y, x, homogenous=False):
     return grid
 
 
-
 def warp(im, u, v):
+    """Warping of a given image using provided optical flow.
+    
+    Args:
+        im: input image
+        u, v: optical flow in x and y direction
+    
+    Returns:
+        im_warp: warped image (of the same size as input image)
+    """
+    assert im.shape == u.shape and \
+            u.shape == v.shape
+    
+    im_warp = np.empty_like(im)
+    #
+    # Your code here
+    #
+    ## Hint: You may find function griddata from package scipy.interpolate useful
+    ## code inspired by: https://towardsdatascience.com/image-geometric-transformation-in-numpy-and-opencv-936f5cd1d315
+    ## https://github.com/rajat95/Optical-Flow-Warping-Tensorflow/blob/master/warp.py
+    ## https://sergevideo.blogspot.com/2014/11/writing-simple-optical-flow-in-python.html
+    ## https://github.com/liruoteng/OpticalFlowToolkit/blob/master/lib/flowlib.py
+
+    # get image dimensions [y, x]
+    im_height, im_width = im.shape
+    
+    # number of pixel
+    n = im_height * im_width
+
+    
+    iy, ix = np.mgrid[0:im_height, 0:im_width]
+    fy, fx = np.mgrid[0:im_height:1.0, 0:im_width:1.0] # float-meshgrid
+
+    # add the optical flow to the indices (float)
+    fx = fx + u
+    fy = fy + v
+
+    # clamping of values
+    fx = np.minimum(np.maximum(fx, 0), im_width)
+    fy = np.minimum(np.maximum(fy, 0), im_height)
+
+    points = np.c_[ix.reshape(n, 1), iy.reshape(n, 1)]
+    xi = np.c_[fx.reshape(n, 1), fy.reshape(n, 1)]
+    values = im.reshape(n, 1)
+    im_interpol = griddata(points, values, xi, method='linear')
+    im_warp = im_interpol.reshape(im_height, im_width)
+
+    im_warp = im
+    assert im_warp.shape == im.shape
+    return im_warp
+    
+
+
+def _warp(im, u, v):
     """Warping of a given image using provided optical flow.
     
     Args:
@@ -350,6 +302,7 @@ def warp(im, u, v):
     assert im_warp.shape == im.shape
     return im_warp
 
+
 def compute_cost(im1, im2):
     """Implementation of the cost minimised by Lucas-Kanade."""
     assert im1.shape == im2.shape
@@ -409,8 +362,8 @@ def downsample_x2(x, fsize=5, sigma=1.4):
     # Your code here
     #
 
-    g_kernel = gaussian_kernel(fsize, sigma)
-    g_img = convolve2d(x, g_kernel, mode='same', boundary='symm')
+    G = gaussian_kernel(fsize, sigma)
+    g_img = convolve2d(x, G, mode='same', boundary='symm')
     x = g_img[0::2, 0::2]
 
     return x
