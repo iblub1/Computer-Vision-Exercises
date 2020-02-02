@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import convolve2d
 from scipy.interpolate import griddata
+from PIL import Image
 import matplotlib.pyplot as plt
 import time
 
@@ -43,12 +44,12 @@ def compute_derivatives(im1, im2):
     It = im2 - im1
 
     # Debugging
-    print("Following prints should all have the same shape: ")
-    print("shape Im: ", im1.shape)
-    print("shape Ix: ", Ix.shape)
-    print("shape Iy: ", Iy.shape)
-    print("shape It: ", It.shape)
-    print("\n")
+    ## print("Following prints should all have the same shape: ")
+    ## print("shape Im: ", im1.shape)
+    ## print("shape Ix: ", Ix.shape)
+    ## print("shape Iy: ", Iy.shape)
+    ## print("shape It: ", It.shape)
+    ## print("\n")
 
     assert Ix.shape == im1.shape and \
            Iy.shape == im1.shape and \
@@ -145,7 +146,7 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
             #   calculation of U = [u, v]   #
             #################################
 
-            ## current step: M * U = b
+            ## current step [ M * U = b => U = M^-1 * b ]
 
             ## left hand side: nabla_I.T * nabla_T * U
 
@@ -160,6 +161,7 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
             # next step in calculation: U = inv(M) * nabla_I.T * (-It)
             M_inv = np.linalg.inv(M)
             U = M_inv.dot(b)
+            
 
             u[r, c] = U[0]
             v[r, c] = U[1]
@@ -390,7 +392,13 @@ def gaussian_pyramid(img, nlevels=3, fsize=5, sigma=1.4):
     GP = [None] * nlevels
     GP[0] = img
     for i in range(1, nlevels):
-        GP[i] = downsample_x2(img, fsize, sigma)
+        GP[i] = downsample_x2(GP[i - 1], fsize, sigma)
+    
+    # invert elemets so that highest level is original image
+    # GP = GP[::-1]
+
+    # for i in range(len(GP)):
+    #     print('Level[{}] = {}'.format(i, GP[i].shape))
 
     return GP
 
@@ -419,6 +427,84 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
     #
     # Your code here
     #
+
+    ## Algorithm
+    # 1.) get the Gaussian pyramids of both images
+    # 2.) compute motion flow between images of level K 
+    #     (iterative LK-Algorithm)
+    # 3.) upsample the motion flow u_K, v_K to the size of 
+    #     the next level (K-1) in the gaussian pyramid
+    # 4.) upscale the motion flow by the factor 2
+    # 5.) apply warping to the im1 of level K - 1 in the
+    #     gaussian pyramid (results in an relatively good
+    #     approximation of the image in the gaussian pyramid 
+    #     of im2)
+    # 6.) do the steps 2.) - 4.) again with the next level K - 1
+    #     (compute motion field and add it up to the upscaled 
+    #      motion field of the previous level, and expand it to the
+    #      next level, and so on ...)
+
+    ## 1.) gaussian pyramids of image1/2 -> DONE
+
+    ## 2.) compute motion flow between images of level K
+    ##     (iterative LK-Algorithm)
+    
+
+    K = len(pyramid1)              # determine levels of pyramid
+    levels = np.arange(K - 1, -1, -1)  # [K - 1, K - 2, ..., 0]
+    
+
+    # start with the highest index of the pyramid (lowest resolution)
+    for k in levels:
+        print('Level k = [{}]'.format(k))
+
+        # 2.) iterative Lukas-Kanade (for moition refinement) at level k
+        #################################################################################
+
+        # setting starting cost to infinity
+        d = np.inf
+
+        # get the pyramid images of level k
+        im1_k = pyramid1[k].copy()
+        im2_k = pyramid2[k].copy()
+
+        # warp image 1 into image 2
+        
+        for i in range(n_iter):
+            Ix, Iy, It = compute_derivatives(im1_k, im2_k)
+            u_k, v_k = compute_motion(Ix, Iy, It)   # get motion field of current iteration
+            im1_k = warp(im1_k, u_k, v_k)           # warp im1_k to im2_k
+            d = compute_cost(im1_k, im2_k)
+            print('[{}] cost: d = {}'.format(i, d))
+            
+        
+        #################################################################################
+
+        # 3.) Upsample the motion flow u_K, v_K to the size of 
+        #     the next level (K-1) in the gaussian pyramid
+
+        # given: motion flow [u_k, v_k]
+
+        # 3.1) Upsampling to next size (if final level G0 [original image] is not reached)
+        # 3.2) Then resizing by 2
+        if k > 0:
+            new_size = pyramid1[k - 1].shape
+            print('{}_size = {} | {}_size = {}'.format(k, pyramid1[k].shape, k - 1, new_size))
+
+            # convert to PIL-Image to use the resize operation
+            u_k = Image.fromarray(u_k)
+            v_k = Image.fromarray(v_k)
+
+            # do the expand operation on the motion field of the current level
+            u_k = u_k.resize(new_size, resample=Image.BILINEAR)
+            v_k = v_k.resize(new_size, resample=Image.BILINEAR)
+
+            # convert back from PIL-Image to numpy-array
+            u_k = np.array(u_k) * 2
+            v_k = np.array(v_k) * 2
+            
+
+    print('DONE')
     
     assert u.shape == im1.shape and \
             v.shape == im1.shape
