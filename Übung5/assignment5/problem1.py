@@ -406,6 +406,77 @@ def gaussian_pyramid(img, nlevels=3, fsize=5, sigma=1.4):
 # Coarse-to-fine Lucas-Kanade #
 ###############################
 
+# iterative Lucas-Kanade
+def iter_LK(im1, im2, n_iter):
+    '''
+        Function: 
+            apply Lucas-Kanade motion estimation until convergence
+        Input:
+            im1: input image from first gaussian pyramid
+            im2: input image from second gaussian pyramid
+            n_iter: number of applications of LK
+        Output:
+            u: estimated motion flow in x direction
+            v: estimated motion flow in y direction
+    
+    '''
+    # initialize the cost as infintity (to be overwritten) 
+    d = np.inf
+
+    i = 0
+    # do, when error is n_iter not reached [and if error is > 0 ]
+    while i < n_iter and d > 0:
+        Ix, Iy, It = compute_derivatives(im1, im2)
+        u, v       = compute_motion(Ix, Iy, It)       # get motion field of current iteration
+        im1_warp   = warp(im1, u, v)                  # warp im1_k to im2_k
+        
+        # check the current cost
+        d = compute_cost(im1_warp, im2)
+                
+        i += 1
+        print('[{}] cost: d = {}'.format(i, d))
+
+    return u, v
+
+
+# upsample function
+def expand(u, v, new_size):
+    '''
+        Function: expand the motion flows u, v to the next higher solution
+                  in the gaussian pyramid (with bilinear interpolation)
+        Input:
+            u: motion flow in x-direction of size [h, w]
+            v: motion flow in y-direction of size [h, w]
+
+        Output:
+            u_k:  motion flow in x-direction of size [2h, 2w]
+            v_k:  motion flow in y-direction of size [2h, 2w]
+
+    '''
+    assert u.shape == v.shape
+
+    # convert to PIL-Image to use the resize operation
+    u_k = Image.fromarray(u)
+    v_k = Image.fromarray(v)
+
+    # do the expand operation on the motion field of the current level
+    u_k = u_k.resize(new_size, resample=Image.BILINEAR)
+    v_k = v_k.resize(new_size, resample=Image.BILINEAR)
+
+    # convert back from PIL-Image to numpy-array
+    u_k = np.array(u_k)
+    v_k = np.array(v_k)
+
+    # scale the expanded image by 2
+    u_k *= 2
+    v_k *= 2
+
+    assert u_k.shape == new_size and v_k.shape == new_size
+
+    return u_k, v_k
+
+
+
 def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
     """Implementation of coarse-to-fine strategy
     for optical flow estimation.
