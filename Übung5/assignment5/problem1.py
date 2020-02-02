@@ -420,6 +420,10 @@ def iter_LK(im1, im2, n_iter):
             v: estimated motion flow in y direction
     
     '''
+
+    print('iter_LK')
+    print('im1 = ', im1.shape, ' | im2 = ', im2.shape)
+
     # initialize the cost as infintity (to be overwritten) 
     d = np.inf
 
@@ -455,9 +459,13 @@ def expand(u, v, new_size):
     '''
     assert u.shape == v.shape
 
+    print('expand(Input)')
+    print('u = ', u.shape, ' | v = ', v.shape)
+
     # convert to PIL-Image to use the resize operation
     u_k = Image.fromarray(u)
     v_k = Image.fromarray(v)
+    print('Image: u_k = ', u_k.size, ' | v_k = ', v_k.size)
 
     # do the expand operation on the motion field of the current level
     u_k = u_k.resize(new_size, resample=Image.BILINEAR)
@@ -471,8 +479,11 @@ def expand(u, v, new_size):
     u_k *= 2
     v_k *= 2
 
-    assert u_k.shape == new_size and v_k.shape == new_size
+    print('expand u_k = ', u_k.shape, ' | v_k = ', v_k.shape)
 
+
+
+    assert u_k.shape == v_k.shape
     return u_k, v_k
 
 
@@ -523,8 +534,55 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
 
     K = len(pyramid1)              # determine levels of pyramid
     levels = np.arange(K - 1, -1, -1)  # [K - 1, K - 2, ..., 0]
-    
+    print('levels = ', levels, ' | K = ', K)
 
+
+    ##
+    # intial estimation
+    ##
+    im1_K = pyramid1[-1].copy()
+    im2_K = pyramid2[-1].copy()
+
+    # iterative LK-Algorithm
+    u_K, v_K = iter_LK(im1_K, im2_K, n_iter)
+    print('Highest Level')
+    print('u_K = ', u_K.shape, ' | v_K = ', v_K.shape)
+
+    # expand image to new resolution
+    new_size = pyramid1[K - 1].shape
+    print('new size = ', new_size)
+    # u_K, v_K = expand(u_K, v_K, new_size)
+    print('next level')
+    print('u_K = ', u_K.shape, ' | v_K = ', v_K.shape)
+
+    
+    # for k in range(K - 2, -1):
+    #     print('other k = ', k)
+
+
+    # for k in levels:
+        # im1_k = pyramid1.copy()
+        # im2_k = pyramid2.copy()
+
+        # if k > 0:
+            # print('{} = {} | {} - 1 = {}'.format(k, pyramid1[k].shape, k - 1, pyramid1[k - 1].shape))
+
+            # # apply ierative LK-Algorithm for level k (get motion flow u, v)
+            # u_k, v_k = iter_LK(im1_k, im2_k, n_iter)
+
+            # # expand and scale the motion flow u, v to size of pyramid level (k - 1)
+            # new_size = pyramid1[k - 1].shape
+            # u_k, v_k = expand(u_k, v_k, new_size)
+
+            
+
+        # else:
+            # print('{} = {}'.format(k, pyramid1[k].shape))
+
+
+
+
+    '''
     # start with the highest index of the pyramid (lowest resolution)
     for k in levels:
         print('Level k = [{}]'.format(k))
@@ -576,7 +634,9 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
             
 
     print('DONE')
-    
+    '''
+
+
     assert u.shape == im1.shape and \
             v.shape == im1.shape
     return u, v
