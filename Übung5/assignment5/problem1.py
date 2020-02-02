@@ -540,24 +540,34 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
     ##
     # intial estimation
     ##
-    im1_K = pyramid1[-1].copy()
-    im2_K = pyramid2[-1].copy()
+    im1_k = pyramid1[-1].copy()
+    im2_k = pyramid2[-1].copy()
 
     # iterative LK-Algorithm
-    u_K, v_K = iter_LK(im1_K, im2_K, n_iter)
+    u_k, v_k = iter_LK(im1_k, im2_k, n_iter)
     print('Highest Level')
-    print('u_K = ', u_K.shape, ' | v_K = ', v_K.shape)
+    print('u_K = ', u_k.shape, ' | v_K = ', v_k.shape)
 
     # expand image to new resolution
     new_size = pyramid1[K - 1].shape
     print('new size = ', new_size)
-    # u_K, v_K = expand(u_K, v_K, new_size)
+    # u_K_, v_K_e = expand(u_K, v_K, new_size)
     print('next level')
-    print('u_K = ', u_K.shape, ' | v_K = ', v_K.shape)
+    print('u_K = ', u_k.shape, ' | v_K = ', v_k.shape)
 
-    
-    # for k in range(K - 2, -1):
-    #     print('other k = ', k)
+
+        
+    for k in range(K - 2, -1, -1):  # [ K-2, K-3, ..., 0 ], [K-1] is the highest level
+        print('other k = ', k)  # should be [1, 0]
+
+        # add motion flow to the new level k
+
+
+        
+
+
+
+
 
 
     # for k in levels:
