@@ -88,23 +88,13 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     rows = Ix.shape[0]
     cols = Ix.shape[1]
 
-
-    # Currently not in use! Maybe later?!
-    '''
-    # construct elements of Nabla I to use later
-    Ix2 = np.square(Ix)
-    Ixy = Ix * Iy
-    Iy2 = np.square(Iy)
-    Itx = Ix * It
-    Ity = Iy * It
-
+    # Task 8
     if aggregate == 'gaussian':
-        G = gaussian_kernel(fsize=5, sigma=sigma)
-        Ix2 = convolve2d(Ix2, G)
-        Ixy = convolve2d(Ixy, G)
-        Iy2 = convolve2d(Iy2, G)
-    '''
-
+        G = (gaussian_kernel(patch_size, sigma=sigma)).flatten()
+        print('G(Gaussian) = ', G.shape)
+    else:
+        G = (np.ones((patch_size, patch_size))).flatten()
+        print('G(ones) = ', G.shape)
 
     # inspired by this wikipedia article
     # https://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
@@ -117,30 +107,20 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
             #  construct the needed structures for calculation  #
             #####################################################
 
-            # current patch of Ix as falttened matrix -> vector 
-            # size: [patch_size * patch_size, 1]
-            Ix_rc = Ix[r - w : r + w + 1, c - w : c + w + 1].flatten()
-            Ix_rc = Ix_rc.reshape((Ix_rc.shape[0], 1))
+            # current patch of Ix/Iy/It as falttened matrix -> vector 
+            Ix_rc = Ix[r - w : r + w + 1, c - w : c + w + 1].flatten() * G
+            Ix_rc = Ix_rc.reshape((Ix_rc.shape[0], 1))  # [patch_size * patch_size, 1]
 
-            # current patch of Iy as falttened matrix -> vector
-            # size: [patch_size * patch_size, 1]
-            Iy_rc = Iy[r - w : r + w + 1, c - w : c + w + 1].flatten()
-            Iy_rc = Iy_rc.reshape((Iy_rc.shape[0], 1))
+            Iy_rc = Iy[r - w : r + w + 1, c - w : c + w + 1].flatten() * G
+            Iy_rc = Iy_rc.reshape((Iy_rc.shape[0], 1))  # [patch_size * patch_size, 1]
 
-            # current patch of It as falttened matrix -> vector
-            # size: [patch_size * patch_size, 1]
-            It_rc = It[r - w : r + w + 1, c - w : c + w + 1].flatten()
-            It_rc = It_rc.reshape((It_rc.shape[0], 1))
+            It_rc = It[r - w : r + w + 1, c - w : c + w + 1].flatten() * G
+            It_rc = It_rc.reshape((It_rc.shape[0], 1))  # [patch_size * patch_size, 1]
 
 
             # concatenate the Ix and the Iy vector
-            # size: [patch_size^2, 2]
-            nabla_I   = np.c_[Ix_rc, Iy_rc]
-
-            # size: [2, patch_size^2]
-            nabla_I_T = nabla_I.T
-            # print('Nabla_I = ', nabla_I.shape, ' | Nabla_I.T = ', nabla_I_T.shape)
-
+            nabla_I   = np.c_[Ix_rc, Iy_rc]             # [patch_size^2, 2]
+            nabla_I_T = nabla_I.T                       # [2, patch_size^2]
 
             #################################
             #   calculation of U = [u, v]   #
@@ -148,19 +128,15 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
 
             ## current step [ M * U = b => U = M^-1 * b ]
 
-            ## left hand side: nabla_I.T * nabla_T * U
-
             # M = nabla_I.T * nabla_I
-            # size: [2, 2] = [2, patch_size^2] * [patch_size^2, 2]
-            M = nabla_I_T.dot(nabla_I)
+            M = nabla_I_T.dot(nabla_I)     # [2, 2]
 
             ## right hand side: b = nabla_I.T * (-It)
-            b = nabla_I_T.dot(-It_rc)
-            # print('b = ', b.shape)
+            b = nabla_I_T.dot(-It_rc)      # [2, 1]
 
             # next step in calculation: U = inv(M) * nabla_I.T * (-It)
-            M_inv = np.linalg.inv(M)
-            U = M_inv.dot(b)
+            M_inv = np.linalg.inv(M)       # [2, 2]
+            U = M_inv.dot(b)               # [2, 1]
             
 
             u[r, c] = U[0]
@@ -393,12 +369,6 @@ def gaussian_pyramid(img, nlevels=3, fsize=5, sigma=1.4):
     GP[0] = img
     for i in range(1, nlevels):
         GP[i] = downsample_x2(GP[i - 1], fsize, sigma)
-    
-    # invert elemets so that highest level is original image
-    # GP = GP[::-1]
-
-    # for i in range(len(GP)):
-    #     print('Level[{}] = {}'.format(i, GP[i].shape))
 
     return GP
 
@@ -438,7 +408,7 @@ def iter_LK(im1, im2, n_iter):
         d = compute_cost(im1_warp, im2)
                 
         i += 1
-        # print('[{}] cost: d = {}'.format(i, d))
+        print('[{}] cost: d = {}'.format(i, d))
 
     return u, v
 
@@ -455,13 +425,7 @@ def expand(im_in):
             im_out: rescaled image of size [2h, 2w]
 
     '''
-
-    # since scipy.misc.resize is deprecated, the PIL-Library is used
-    # to upscale(expand)
-    # WARNING: PIL.Image axis are (cols, rows), numpy.ndarray axis are (rows, cols)
-    #   (was irrelevent here, since both dimensions were scaled by the same factor)
-    #          Conversion from PIL.Image to numpy.ndarray swaps the axis back
-
+    
     # conveting to PIL-Images to rescale
     im_exp = Image.fromarray(im_in)
 
@@ -500,20 +464,22 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
 
     # descending indices of the gaussian pyramid 
     # (from small to big image)
-    levels = np.arange(len(pyramid1) - 1, -1, -1)  # [K - 1, K - 2, ..., 0]
-
+    K = len(pyramid1)
+    levels = np.arange(K - 1, -1, -1)  # [K - 1, K - 2, ..., 0]
 
     #######################
     #  intial estimation  #
     #######################
 
     ##################################################
-    print('Level [{}]'.format(levels[-1]))
+    print('Level [{}]'.format(K - 1))
 
     # get coarsest images from the gaussian pyramid
     # at level (k - 1)
     im1_k = pyramid1[-1].copy()
+    print('im1_k = ', im1_k.shape)
     im2_k = pyramid2[-1].copy()
+    print('im2_k = ', im2_k.shape)
 
     # iterative LK-Algorithm (refine the motion)
     uk, vk = iter_LK(im1_k, im2_k, n_iter)
@@ -530,7 +496,7 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
 
     # iterate over [ K-2, K-3, ..., 0 ] -> all scales except the smallest
     for k in levels[1:]:  
-        print('Level [{}]'.format(levels[k]))
+        print('Level [{}]'.format(k))
 
         # get images of current scale from the pyramid
         im1_k = pyramid1[k]
