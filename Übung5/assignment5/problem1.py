@@ -91,15 +91,14 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
     # Task 8
     if aggregate == 'gaussian':
         G = (gaussian_kernel(patch_size, sigma=sigma)).flatten()
-        print('G(Gaussian) = ', G.shape)
     else:
         G = (np.ones((patch_size, patch_size))).flatten()
-        print('G(ones) = ', G.shape)
 
     # inspired by this wikipedia article
     # https://en.wikipedia.org/wiki/Lucas%E2%80%93Kanade_method
     # and especially this youtube video (dimensions of terms)
     # https://www.youtube.com/watch?v=dVlRiJ-Xz8I
+
 
     for r in range(w, rows - w):
         for c in range(w, cols - w):            
@@ -108,13 +107,13 @@ def compute_motion(Ix, Iy, It, patch_size=15, aggregate="const", sigma=2):
             #####################################################
 
             # current patch of Ix/Iy/It as falttened matrix -> vector 
-            Ix_rc = Ix[r - w : r + w + 1, c - w : c + w + 1].flatten() * G
+            Ix_rc = Ix[r - w : r + w + 1, c - w : c + w + 1].flatten()
             Ix_rc = Ix_rc.reshape((Ix_rc.shape[0], 1))  # [patch_size * patch_size, 1]
 
-            Iy_rc = Iy[r - w : r + w + 1, c - w : c + w + 1].flatten() * G
+            Iy_rc = Iy[r - w : r + w + 1, c - w : c + w + 1].flatten()
             Iy_rc = Iy_rc.reshape((Iy_rc.shape[0], 1))  # [patch_size * patch_size, 1]
 
-            It_rc = It[r - w : r + w + 1, c - w : c + w + 1].flatten() * G
+            It_rc = It[r - w : r + w + 1, c - w : c + w + 1].flatten()
             It_rc = It_rc.reshape((It_rc.shape[0], 1))  # [patch_size * patch_size, 1]
 
 
@@ -187,98 +186,24 @@ def warp(im, u, v):
     im_height, im_width = im.shape
     
     # number of pixel
-    n = im_height * im_width
+    N = im_height * im_width
 
-    
-    iy, ix = np.mgrid[0:im_height, 0:im_width]
+    iy, ix = np.mgrid[0:im_height, 0:im_width]         # int-meshgrid
     fy, fx = np.mgrid[0:im_height:1.0, 0:im_width:1.0] # float-meshgrid
 
     # add the optical flow to the indices (float)
     fx = fx + u
     fy = fy + v
 
-    # clamping of values
-    fx = np.minimum(np.maximum(fx, 0), im_width)
-    fy = np.minimum(np.maximum(fy, 0), im_height)
-
-    points = np.c_[ix.reshape(n, 1), iy.reshape(n, 1)]
-    xi = np.c_[fx.reshape(n, 1), fy.reshape(n, 1)]
-    values = im.reshape(n, 1)
-    im_interpol = griddata(points, values, xi, method='linear')
+    points = np.c_[ix.reshape(N, 1), iy.reshape(N, 1)]
+    xi = np.c_[fx.reshape(N, 1), fy.reshape(N, 1)]
+    values = im.reshape(N, 1)
+    im_interpol = griddata(points, values, xi, method='linear', fill_value=0.0)
     im_warp = im_interpol.reshape(im_height, im_width)
 
-    im_warp = im
     assert im_warp.shape == im.shape
     return im_warp
     
-
-
-def _warp(im, u, v):
-    """Warping of a given image using provided optical flow.
-    
-    Args:
-        im: input image
-        u, v: optical flow in x and y direction
-    
-    Returns:
-        im_warp: warped image (of the same size as input image)
-    """
-    assert im.shape == u.shape and \
-            u.shape == v.shape
-    
-    im_warp = np.empty_like(im)
-    #
-    # Your code here
-    #
-    ## Hint: You may find function griddata from package scipy.interpolate useful
-    ## code inspired by: https://towardsdatascience.com/image-geometric-transformation-in-numpy-and-opencv-936f5cd1d315
-    
-    # h(x, y) = (u + x, v + y) -> im_warp
-    rows, cols = im.shape
-    grid_indices = (get_grid(rows, cols, homogenous=False)).T   # returns (y, x)-Indices as v-stacked Matrix
-    y_indices = grid_indices[:, 0]
-    x_indices = grid_indices[:, 1]
-
-    # index-matrix for warped coordinates (same size as origonal grid)
-    warp_grid = np.zeros_like(grid_indices)
-    y_indices_warp = warp_grid[:, 0]
-    x_indices_warp = warp_grid[:, 1]
-
-    # N = Number of indices -> grid_indices.shape[0]
-    N = grid_indices.shape[0]
-    
-    print('----> max_y = ', np.max(grid_indices[:, 0])) # y-column
-    print('----> max_x = ', np.max(grid_indices[:, 1])) # x-column
-
-
-    for i in range(0, N):
-        x_i, y_i = x_indices[i], y_indices[i]
-
-        tx = u[y_i, x_i]
-        ty = v[y_i, x_i]
-
-        # new indices for warp-grid
-        x_indices_warp[i] = x_i + tx
-        y_indices_warp[i] = y_i + ty
-
-    print('Indices: ')
-    print('x_i_w = ', x_indices_warp.shape, ' | y_i_w = ', y_indices_warp.shape)
-    
-    # stack up the y- and x-coordinates to be suitable input of griddata
-    warp_points = np.stack([y_indices_warp, x_indices_warp])
-    print('points = ', warp_points.shape)
-
-
-    # interpolate real values to discrete values
-    im_warp = griddata(warp_points, im, (y_indices, x_indices), method='linear')
-
-    print('im_warp = ', im_warp.shape)
-    plt.imshow(im_warp)
-    plt.show()
-
-
-    assert im_warp.shape == im.shape
-    return im_warp
 
 
 def compute_cost(im1, im2):
@@ -391,24 +316,26 @@ def iter_LK(im1, im2, n_iter):
     
     '''
 
-    print('iter_LK')
-    print('im1 = ', im1.shape, ' | im2 = ', im2.shape)
+    # print('iter_LK')
+    # print('im1 = ', im1.shape, ' | im2 = ', im2.shape)
 
     # initialize the cost as infintity (to be overwritten) 
     d = np.inf
 
     i = 0
+    img1 = im1.copy()
+    img2 = im2.copy()
     # do, when error is n_iter not reached [and if error is > 0 ]
     while i < n_iter and d > 0:
-        Ix, Iy, It = compute_derivatives(im1, im2)
+        Ix, Iy, It = compute_derivatives(img1, img2)
         u, v       = compute_motion(Ix, Iy, It)       # get motion field of current iteration
-        im1_warp   = warp(im1, u, v)                  # warp im1_k to im2_k
+        img1       = warp(img1, u, v)                 # warp im1_k to im2_k
         
         # check the current cost
-        d = compute_cost(im1_warp, im2)
+        d = compute_cost(im1, im2)
                 
         i += 1
-        print('[{}] cost: d = {}'.format(i, d))
+        # print('[{}] cost: d = {}'.format(i, d))
 
     return u, v
 
@@ -472,14 +399,12 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
     #######################
 
     ##################################################
-    print('Level [{}]'.format(K - 1))
+    # print('Level [{}]'.format(K - 1))
 
     # get coarsest images from the gaussian pyramid
     # at level (k - 1)
     im1_k = pyramid1[-1].copy()
-    print('im1_k = ', im1_k.shape)
     im2_k = pyramid2[-1].copy()
-    print('im2_k = ', im2_k.shape)
 
     # iterative LK-Algorithm (refine the motion)
     uk, vk = iter_LK(im1_k, im2_k, n_iter)
@@ -496,7 +421,7 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
 
     # iterate over [ K-2, K-3, ..., 0 ] -> all scales except the smallest
     for k in levels[1:]:  
-        print('Level [{}]'.format(k))
+        # print('Level [{}]'.format(k))
 
         # get images of current scale from the pyramid
         im1_k = pyramid1[k]
@@ -522,9 +447,9 @@ def coarse_to_fine(im1, im2, pyramid1, pyramid2, n_iter=3):
             uk_exp = uk
             vk_exp = vk
 
-        print('[', k, ']: uk_exp = ', uk_exp.shape, ' | vk_exp = ', vk_exp.shape)
+        # print('[', k, ']: uk_exp = ', uk_exp.shape, ' | vk_exp = ', vk_exp.shape)
 
-    print('[FINAL]: u = ', uk_exp.shape, ' | v = ', vk_exp.shape)
+    # print('[FINAL]: u = ', uk_exp.shape, ' | v = ', vk_exp.shape)
 
     # set the final parameter 
     # (LK at original resolution)
